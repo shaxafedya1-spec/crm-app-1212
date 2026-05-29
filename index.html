@@ -20,7 +20,7 @@
     <div id="content"></div>
     <script>
         let clients = [];
-        let nextNumber = 1;  // Нумерация клиентов
+        let nextNumber = 1;
         
         function save() { 
             localStorage.setItem('clients', JSON.stringify(clients)); 
@@ -34,21 +34,29 @@
             if(n) nextNumber = parseInt(n);
         }
         
-        // Отправка данных боту
-        async function sendToBot(client) {
+        // Отправка в группу Telegram
+        async function sendToGroup(client) {
+            const BOT_TOKEN = "8628159718:AAH8tPnTX0fReDzpByMG44A-iF6HG-Pm5-8";
+            const CHAT_ID = "@neostyle_zakazy";  // ← ЗДЕСЬ USERNAME ГРУППЫ
+            
+            const message = `🆕 НОВЫЙ КЛИЕНТ #${client.number}
+📛 Имя: ${client.name}
+📞 Телефон: ${client.phone}
+📌 Статус: ${client.status}
+🕐 Время: ${client.time}`;
+            
+            const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(message)}`;
+            
             try {
-                let response = await fetch(`https://api.telegram.org/bot8628159718:AAH8tPnTX0fReDzpByMG44A-iF6HG-Pm5-8/sendMessage`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        chat_id: '@YOUR_GROUP_USERNAME',  // ВСТАВЬ СВОЙ ЮЗЕРНЕЙМ ГРУППЫ (например @my_crm_group)
-                        text: `🆕 НОВЫЙ КЛИЕНТ #${client.number}\n📛 Имя: ${client.name}\n📞 Телефон: ${client.phone}\n📌 Статус: ${client.status}`,
-                        parse_mode: 'HTML'
-                    })
-                });
-                console.log('Отправлено в группу');
+                let response = await fetch(url);
+                let result = await response.json();
+                if(result.ok) {
+                    console.log("Отправлено в группу");
+                } else {
+                    console.log("Ошибка:", result);
+                }
             } catch(e) {
-                console.log('Ошибка отправки:', e);
+                console.log("Ошибка отправки:", e);
             }
         }
         
@@ -65,7 +73,7 @@
                         <option>Договор</option>
                         <option>Закрыт</option>
                     </select>
-                    <button onclick="add()">Сохранить и отправить в группу</button>
+                    <button onclick="add()">Сохранить и отправить</button>
                 </div>
             `;
         }
@@ -83,7 +91,7 @@
             };
             
             clients.push(newClient);
-            sendToBot(newClient);  // Отправляем в группу
+            sendToGroup(newClient);  // Отправляем в группу
             nextNumber++;
             save();
             showList();
