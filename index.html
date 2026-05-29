@@ -68,7 +68,7 @@ let clients = [], nextNumber = 1, currentFilter = 'all';
 
 function formatNumber(num) { return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " "); }
 function formatPrice(p) { 
-    if(p === '—' || !p) return '—';
+    if(p === '—' || !p || p === 'undefined') return '—';
     return p.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " сум"; 
 }
 
@@ -83,7 +83,7 @@ function save() { localStorage.setItem('clients', JSON.stringify(clients)); loca
 const CHAT_ID = -1003831665624;
 const BOT_TOKEN = "8628159718:AAH8tPnTX0fReDzpByMG44A-iF6HG-Pm5-8";
 
-// Функция отправки полной карточки в группу
+// Отправка полной карточки в группу
 async function sendFullCardToGroup(c, eventType = 'new') {
     let title = '';
     if(eventType === 'new') title = `🆕 НОВЫЙ КЛИЕНТ #${c.number}`;
@@ -96,16 +96,14 @@ async function sendFullCardToGroup(c, eventType = 'new') {
     message += `📐 Площадь: ${c.area} м²\n`;
     message += `📍 Адрес: ${c.address}\n`;
     message += `📌 Статус: ${c.status}\n`;
-    if(c.price && c.price !== '—') message += `💰 Сумма: ${formatPrice(c.price)}\n`;
+    if(c.price && c.price !== '—' && c.price !== 'undefined') message += `💰 Сумма: ${formatPrice(c.price)}\n`;
     message += `💬 Комментарий: ${c.comment}\n\n`;
     message += `🕐 ${new Date().toLocaleString()}`;
     
     const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(message)}`;
     try {
-        let response = await fetch(url);
-        let result = await response.json();
-        console.log('Отправлено в группу:', result);
-        return result.ok;
+        await fetch(url);
+        return true;
     } catch(e) { 
         console.log('Ошибка отправки:', e);
         return false;
@@ -131,6 +129,7 @@ async function sendFileToGroup(fileData, c, fileType = 'file') {
 function setFilter(s) { currentFilter = s; document.querySelectorAll('.filter-btn').forEach((btn,i)=>btn.classList.toggle('active', btn.innerText === s || (s==='all' && btn.innerText==='Все'))); showList(); }
 function getFiltered() { return currentFilter === 'all' ? clients : clients.filter(c => c.status === currentFilter); }
 
+// ФОРМА ДОБАВЛЕНИЯ - БЕЗ ПОЛЯ СУММЫ!
 function showAdd() {
     document.getElementById('content').innerHTML = `<div class="card"><div class="number-badge">Новый клиент → #${formatNumber(nextNumber)}</div>
         <div class="input-group"><label>📛 Имя *</label><input id="name" placeholder="Ислом Каримов"></div>
@@ -140,7 +139,7 @@ function showAdd() {
         <div class="input-group"><label>📌 Статус</label><select id="status"><option>Новый</option><option>В работе</option><option>Договор</option><option>Закрыт</option></select></div>
         <div class="input-group"><label>💬 Комментарий</label><textarea id="comment" rows="3" placeholder="Дополнительная информация..."></textarea></div>
         <div class="input-group"><label>📎 Файлы</label><input type="file" id="files" multiple accept=".pdf,.doc,.docx,.jpg,.png"></div>
-        <button class="save-btn" onclick="add()">✅ Сохранить и отправить</button></div>`;
+        <button class="save-btn" onclick="add()">✅ Сохранить</button></div>`;
 }
 
 async function add() {
@@ -162,7 +161,7 @@ async function add() {
         area: document.getElementById('area').value || '—',
         address: document.getElementById('address').value || '—',
         status: document.getElementById('status').value,
-        price: '—',
+        price: '—',  // сумма пустая до подписания договора
         comment: document.getElementById('comment').value || '—',
         time: new Date().toLocaleString('ru-RU'),
         files: fileDataArray,
@@ -173,7 +172,7 @@ async function add() {
     clients.push(newClient);
     save();
     
-    // Отправляем полную карточку в группу
+    // Отправляем карточку в группу
     await sendFullCardToGroup(newClient, 'new');
     
     // Отправляем файлы
@@ -183,7 +182,7 @@ async function add() {
     
     nextNumber++;
     showList();
-    alert(`✅ Клиент #${newClient.number} добавлен! Карточка отправлена в группу.`);
+    alert(`✅ Клиент #${newClient.number} добавлен!`);
 }
 
 function showList() {
@@ -224,11 +223,12 @@ function view(n) {
         dealFilesHtml += '</div>';
     }
     
+    // ПОЛЯ ДЛЯ ПОДПИСАНИЯ ДОГОВОРА - появляются только при статусе "Договор"
     let dealSection = '';
     if(c.status === 'Договор' && !c.dealSigned) {
         dealSection = `<div class="deal-section">
-            <div class="input-group"><label>💰 Сумма договора (сум)</label><input id="dealPrice" placeholder="10 000 000" type="number"></div>
-            <div class="input-group"><label>📄 Файл договора</label><input type="file" id="dealFile" accept=".pdf,.doc,.docx"></div>
+            <div class="input-group"><label>💰 Сумма договора (сум)</label><input id="dealPrice" type="number" placeholder="Введите сумму"></div>
+            <div class="input-group"><label>📄 Файл договора (PDF, DOC)</label><input type="file" id="dealFile" accept=".pdf,.doc,.docx"></div>
             <button class="save-btn" onclick="signDeal(${n})">✅ Подписать договор</button>
         </div>`;
     } else if(c.status === 'Договор' && c.dealSigned) {
@@ -238,8 +238,18 @@ function view(n) {
         </div>`;
     }
     
-    let statusSelect = !isDealLocked ? `<select id="ns"><option ${c.status==='Новый'?'selected':''}>Новый</option><option ${c.status==='В работе'?'selected':''}>В работе</option><option ${c.status==='Договор'?'selected':''}>Договор</option><option ${c.status==='Закрыт'?'selected':''}>Закрыт</option></select>
-    <button class="save-btn" onclick="changeStatus(${n})">🔄 Изменить статус</button>` : `<div class="deal-section" style="color:#ff6666;">🔒 Договор подписан — статус нельзя изменить</div>`;
+    let statusSelect = '';
+    if(isDealLocked) {
+        statusSelect = `<div class="deal-section" style="color:#ff6666;">🔒 Договор подписан — статус нельзя изменить</div>`;
+    } else {
+        statusSelect = `<select id="ns">
+            <option ${c.status==='Новый' ? 'selected' : ''}>Новый</option>
+            <option ${c.status==='В работе' ? 'selected' : ''}>В работе</option>
+            <option ${c.status==='Договор' ? 'selected' : ''}>Договор</option>
+            <option ${c.status==='Закрыт' ? 'selected' : ''}>Закрыт</option>
+        </select>
+        <button class="save-btn" onclick="changeStatus(${n})">🔄 Изменить статус</button>`;
+    }
     
     document.getElementById('content').innerHTML = `<div class="card">
         <div class="number-badge">Клиент #${formatNumber(c.number)}</div>
@@ -248,10 +258,10 @@ function view(n) {
         <p>📐 ${c.area} м²</p>
         <p>📍 ${c.address}</p>
         <p><span class="status-badge ${cls}">${c.status}</span></p>
-        ${c.price !== '—' ? `<p>💰 ${formatPrice(c.price)}</p>` : ''}
         <p>💬 ${c.comment}</p>
         <p>🕐 ${c.time}</p>
-        ${filesHtml}${dealFilesHtml}${dealSection}
+        ${filesHtml}${dealFilesHtml}
+        ${dealSection}
         <div class="input-group"><label>📎 Добавить файл</label><input type="file" id="newFile" accept=".pdf,.doc,.docx,.jpg,.png"></div>
         <button class="upload-btn" onclick="addFile(${n})">📤 Добавить файл</button>
         ${statusSelect}
@@ -284,7 +294,7 @@ async function signDeal(n) {
     c.dealSigned = true;
     save();
     
-    // Отправляем полную карточку с договором
+    // Отправляем карточку с договором
     await sendFullCardToGroup(c, 'deal');
     
     alert(`✅ Договор подписан! Сумма: ${formatPrice(c.price)}`);
@@ -304,10 +314,10 @@ async function changeStatus(n) {
     // Отправляем обновлённую карточку
     await sendFullCardToGroup(c, 'status');
     
-    alert(`✅ Статус изменён с "${oldStatus}" на "${newStatus}"! Карточка отправлена в группу.`);
+    alert(`✅ Статус изменён с "${oldStatus}" на "${newStatus}"!`);
     
     if(newStatus === 'Договор') {
-        alert('📄 Теперь можно подписать договор и указать сумму');
+        alert('📄 Теперь можно подписать договор: укажите сумму и прикрепите файл');
     }
     view(n);
 }
@@ -326,7 +336,7 @@ async function addFile(n) {
     save();
     
     await sendFileToGroup(fileData, c, 'file');
-    alert(`✅ Файл "${file.name}" добавлен и отправлен в группу!`);
+    alert(`✅ Файл добавлен и отправлен в группу!`);
     view(n);
 }
 
@@ -358,7 +368,7 @@ function showStats() {
     let total = clients.length, areaTotal = 0, priceTotal = 0;
     clients.forEach(c => { 
         areaTotal += parseFloat(c.area) || 0; 
-        if(c.price !== '—') priceTotal += parseFloat(c.price) || 0; 
+        if(c.price && c.price !== '—') priceTotal += parseFloat(c.price) || 0; 
     });
     document.getElementById('content').innerHTML = `<div class="card"><h3 style="text-align:center;color:#ffd700;">📊 СТАТИСТИКА</h3>
         <p>👥 Всего клиентов: <b style="color:#ffd700;">${total}</b></p>
