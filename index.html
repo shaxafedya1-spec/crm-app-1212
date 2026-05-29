@@ -60,7 +60,6 @@
         .deal-section { border-top: 1px solid #333; margin-top: 15px; padding-top: 15px; }
         .profit-total { background: #1a3a1a; border-radius: 16px; padding: 12px; text-align: center; margin-top: 10px; }
         .manager-select { background: #1a1a1a; border-radius: 16px; padding: 16px; margin-bottom: 15px; border: 1px solid #333; }
-        .debug-info { background: #1a1a1a; border-radius: 12px; padding: 8px; margin-bottom: 10px; font-size: 10px; color: #888; }
     </style>
 </head>
 <body>
@@ -86,7 +85,6 @@
     <div class="menu-buttons">
         <button class="menu-btn" onclick="showList()">Список</button>
         <button class="menu-btn" onclick="showStats()">Статистика</button>
-        <button class="menu-btn" onclick="clearAllData()" style="background:#4a1a1a; color:#ff8888;">Очистить всё</button>
     </div>
     <div id="content"></div>
 </div>
@@ -127,7 +125,7 @@
 <div id="toast" style="display:none;" class="success-toast"></div>
 
 <script>
-// ========== АДМИН (твой ID) ==========
+// ========== ТВОЙ АДМИН ID ==========
 const ADMIN_ID = 954221831;
 
 // ========== СПИСОК МЕНЕДЖЕРОВ ==========
@@ -150,29 +148,37 @@ let clients = [], nextNumber = 1, currentFilter = 'all';
 
 // ========== ПОЛУЧАЕМ ДАННЫЕ ИЗ TELEGRAM ==========
 function initUser() {
-    // Пытаемся получить данные из Telegram WebApp
+    // Получаем данные из Telegram WebApp
     if(window.Telegram && Telegram.WebApp) {
         let initData = Telegram.WebApp.initDataUnsafe;
         if(initData && initData.user) {
             currentUser.id = initData.user.id;
             currentUser.name = initData.user.first_name || (initData.user.username ? '@'+initData.user.username : 'Пользователь');
-            currentUser.isAdmin = (currentUser.id == ADMIN_ID); // Используем == вместо ===
-            console.log('Telegram user:', currentUser);
+            // ТОЛЬКО ЕСЛИ ID СОВПАДАЕТ С ADMIN_ID — ТОГДА АДМИН
+            currentUser.isAdmin = (String(currentUser.id) === String(ADMIN_ID));
         } else {
-            // Если нет user, пробуем получить из строки
             currentUser.id = 'unknown';
             currentUser.name = 'Гость';
             currentUser.isAdmin = false;
         }
     } else {
-        // Вне Telegram (браузер) - для теста используем ID админа
-        currentUser.id = ADMIN_ID;
-        currentUser.name = 'Админ (Тест)';
-        currentUser.isAdmin = true;
-        console.log('Браузер режим: Админ');
+        // Вне Telegram — для теста (никто не админ)
+        currentUser.id = 'browser_' + Date.now();
+        currentUser.name = 'Гость';
+        currentUser.isAdmin = false;
     }
     
-    let roleText = currentUser.isAdmin ? '👑 АДМИН' : (MANAGERS[currentUser.id] ? MANAGERS[currentUser.id].shortName : '👤 МЕНЕДЖЕР');
+    let roleText = '';
+    if(currentUser.isAdmin) {
+        roleText = '👑 АДМИН';
+    } else {
+        let manager = MANAGERS[currentUser.id];
+        if(manager) {
+            roleText = manager.shortName;
+        } else {
+            roleText = '👤 МЕНЕДЖЕР';
+        }
+    }
     document.getElementById('userInfo').innerHTML = `${currentUser.name} ${roleText}`;
     
     // Показываем выбор менеджера только для админа
@@ -188,13 +194,17 @@ function getFilteredClients() {
     if(currentFilter !== 'all') {
         filtered = filtered.filter(c => c.status === currentFilter);
     }
+    // Если не админ — показываем только своих клиентов
     if(!currentUser.isAdmin) {
-        filtered = filtered.filter(c => c.authorId == currentUser.id);
+        filtered = filtered.filter(c => String(c.authorId) === String(currentUser.id));
     }
     return filtered;
 }
 
-function formatNumber(num) { return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " "); }
+function formatNumber(num) { 
+    if(!num) return '0';
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " "); 
+}
 function formatPrice(priceSum) {
     if(!priceSum || priceSum === '—') return '—';
     let num = parseFloat(priceSum);
@@ -206,29 +216,21 @@ function load() {
     if(s) clients = JSON.parse(s); 
     let n = localStorage.getItem('nextNumber'); 
     if(n) nextNumber = parseInt(n); 
-    console.log('Загружено клиентов:', clients.length);
 }
 function save() { 
     localStorage.setItem('clients', JSON.stringify(clients)); 
     localStorage.setItem('nextNumber', nextNumber);
-    console.log('Сохранено клиентов:', clients.length);
-}
-
-function clearAllData() {
-    if(confirm('⚠️ Очистить ВСЕХ клиентов? Это действие нельзя отменить!')) {
-        clients = [];
-        nextNumber = 1;
-        save();
-        showList();
-        showToast('✅ Все данные очищены!');
-    }
 }
 
 const CHAT_ID = -1003831665624;
 const BOT_TOKEN = "8628159718:AAH8tPnTX0fReDzpByMG44A-iF6HG-Pm5-8";
 
 async function sendToGroup(c, eventType = 'new') {
-    let title = eventType === 'new' ? `🆕 НОВЫЙ КЛИЕНТ #${c.number}` : (eventType === 'status' ? `🔄 ИЗМЕНЕНИЕ СТАТУСА` : `✅ ПОДПИСАН ДОГОВОР #${c.number}`);
+    let title = '';
+    if(eventType === 'new') title = `🆕 НОВЫЙ КЛИЕНТ #${c.number}`;
+    else if(eventType === 'status') title = `🔄 ИЗМЕНЕНИЕ СТАТУСА`;
+    else if(eventType === 'deal') title = `✅ ПОДПИСАН ДОГОВОР #${c.number}`;
+    
     let managerName = MANAGERS[c.authorId] ? MANAGERS[c.authorId].name : (c.authorName || 'Неизвестный');
     let message = `${title}\n\n📛 Имя: ${c.name}\n📞 Телефон: ${c.phone}\n📐 Площадь: ${c.area} м²\n📍 Адрес: ${c.address}\n📌 Статус: ${c.status}`;
     if(c.priceSum && c.priceSum !== '—') message += `\n💰 Сумма: ${formatPrice(c.priceSum)}`;
@@ -310,7 +312,7 @@ async function quickAdd() {
     save();
     
     closeQuickForm();
-    showToast(`✅ Клиент #${formatNumber(newClient.number)} добавлен!\nМенеджер: ${authorName}`);
+    showToast(`✅ Клиент #${formatNumber(newClient.number)} добавлен!`);
     
     document.getElementById('quickName').value = '';
     document.getElementById('quickPhone').value = '';
@@ -344,7 +346,7 @@ function showList() {
             <div class="client-name">${c.name}</div>
             <div class="client-info">📞 ${c.phone} | 📐 ${c.area} м²</div>
             <div><span class="status-badge ${cls}">${c.status}</span></div>
-            <div class="author-info">👤 Менеджер: ${managerDisplay}</div>
+            ${!currentUser.isAdmin ? `<div class="author-info">👤 Менеджер: ${managerDisplay}</div>` : `<div class="author-info">👤 Менеджер: ${managerDisplay}</div>`}
         </div>`;
     }
     document.getElementById('content').innerHTML = html;
@@ -356,12 +358,14 @@ async function changeClientStatus(number, newStatus) {
     let oldStatus = c.status;
     if(oldStatus === newStatus) return;
     
-    if(!currentUser.isAdmin && c.authorId != currentUser.id) {
+    // Проверка прав
+    if(!currentUser.isAdmin && String(c.authorId) !== String(currentUser.id)) {
         showToast(`❌ Вы можете менять статус только у своих клиентов!`);
         viewClient(number);
         return;
     }
     
+    // Если договор подписан — только на Закрыт
     if(oldStatus === 'Договор' && c.dealSigned && newStatus !== 'Закрыт') {
         showToast(`❌ Договор подписан! Можно изменить только на "Закрыт"`);
         viewClient(number);
@@ -372,14 +376,21 @@ async function changeClientStatus(number, newStatus) {
     save();
     await sendToGroup(c, 'status');
     showToast(`✅ Статус клиента #${c.number} изменён с "${oldStatus}" на "${newStatus}"`);
-    showList();
+    
+    // Если статус стал Договор — показываем карточку заново с формой подписания
+    if(newStatus === 'Договор') {
+        viewClient(number);
+    } else {
+        showList();
+    }
 }
 
 function viewClient(n) {
     let c = clients.find(x=>x.number===n);
     if(!c) { showList(); return; }
     
-    if(!currentUser.isAdmin && c.authorId != currentUser.id) {
+    // Проверка прав
+    if(!currentUser.isAdmin && String(c.authorId) !== String(currentUser.id)) {
         showToast(`❌ Это не ваш клиент!`);
         showList();
         return;
@@ -387,6 +398,7 @@ function viewClient(n) {
     
     let cls = c.status === 'Новый' ? 'status-new' : (c.status === 'В работе' ? 'status-work' : (c.status === 'Договор' ? 'status-deal' : 'status-closed'));
     
+    // Статусы для выбора
     let statusOptions = '';
     if(c.status === 'Договор' && c.dealSigned) {
         statusOptions = `<select id="statusSelect">
@@ -402,11 +414,12 @@ function viewClient(n) {
         </select>`;
     }
     
+    // Форма подписания договора (только если статус Договор и не подписан)
     let dealSection = '';
     if(c.status === 'Договор' && !c.dealSigned) {
-        dealSection = `<div class="deal-section">
+        dealSection = `<div class="deal-section" id="dealSignSection">
             <div class="input-group"><label>💰 Сумма договора (сум)</label><input id="dealPrice" type="number" placeholder="Введите сумму"></div>
-            <div class="input-group"><label>📄 Файл договора</label><input type="file" id="dealFile" accept=".pdf,.doc,.docx"></div>
+            <div class="input-group"><label>📄 Файл договора (PDF, DOC, DOCX)</label><input type="file" id="dealFile" accept=".pdf,.doc,.docx"></div>
             <button class="save-btn" onclick="signDeal(${c.number})">✅ Подписать договор</button>
         </div>`;
     } else if(c.status === 'Договор' && c.dealSigned) {
