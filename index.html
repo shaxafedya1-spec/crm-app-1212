@@ -6,44 +6,74 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #0a0a0a; padding: 20px; font-family: Arial, sans-serif; }
+        body { background: #0a0a0a; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; }
         .app-container { max-width: 500px; margin: 0 auto; }
-        .header { background: #111; border-radius: 28px; padding: 20px; text-align: center; margin-bottom: 20px; border: 1px solid #222; }
+        
+        /* Шапка */
+        .header { background: #111; border-radius: 28px; padding: 20px; text-align: center; margin-bottom: 20px; border: 1px solid #333; }
         .logo { font-size: 32px; font-weight: bold; }
-        .logo span:first-child { color: white; }
+        .logo span:first-child { color: #ffffff; }
         .logo span:last-child { color: #ffd700; }
-        .sub { font-size: 12px; color: #888; margin-top: 5px; }
+        .sub { font-size: 12px; color: #aaa; margin-top: 5px; letter-spacing: 2px; }
+        
+        /* Кнопки фильтров */
         .filter-buttons { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
-        .filter-btn { flex: 1; background: #1a1a1a; border: none; padding: 10px; border-radius: 30px; color: #888; cursor: pointer; }
+        .filter-btn { flex: 1; background: #1a1a1a; border: none; padding: 10px; border-radius: 30px; color: #ccc; cursor: pointer; font-weight: 600; }
         .filter-btn.active { background: #ffd700; color: #111; }
+        
+        /* Меню кнопки */
         .menu-buttons { display: flex; gap: 12px; margin-bottom: 20px; }
-        .menu-btn { flex: 1; background: #1a1a1a; border: none; padding: 14px; border-radius: 16px; color: white; cursor: pointer; }
-        .menu-btn.add { background: #ffd700; color: #111; }
-        .menu-btn.clear { background: #2a2a2a; color: #ff4444; }
-        .card { background: #111; border-radius: 24px; padding: 20px; margin-bottom: 12px; border: 1px solid #222; }
-        .client-card { background: #111; border-radius: 20px; padding: 16px; margin-bottom: 12px; cursor: pointer; border-left: 4px solid #ffd700; }
-        .client-name { font-size: 18px; font-weight: bold; color: white; }
-        .client-number { background: #ffd700; color: #111; border-radius: 20px; padding: 4px 12px; font-size: 12px; display: inline-block; }
-        .client-info { font-size: 14px; color: #888; margin-top: 8px; }
-        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; }
+        .menu-btn { flex: 1; background: #1a1a1a; border: none; padding: 14px; border-radius: 16px; color: white; cursor: pointer; font-weight: 600; border: 1px solid #333; }
+        .menu-btn.add { background: #ffd700; color: #111; border: none; }
+        .menu-btn.clear { background: #2a2a2a; color: #ff6666; }
+        
+        /* Карточки */
+        .card { background: #111; border-radius: 24px; padding: 20px; margin-bottom: 12px; border: 1px solid #333; }
+        .client-card { background: #111; border-radius: 20px; padding: 16px; margin-bottom: 12px; cursor: pointer; border-left: 4px solid #ffd700; border: 1px solid #333; }
+        .client-name { font-size: 18px; font-weight: bold; color: #fff; }
+        .client-number { background: #ffd700; color: #111; border-radius: 20px; padding: 4px 12px; font-size: 12px; display: inline-block; font-weight: bold; }
+        .client-info { font-size: 14px; color: #ccc; margin-top: 8px; }
+        
+        /* Цветные статусы */
+        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
         .status-new { background: #1a3a5c; color: #66ccff; }
         .status-work { background: #5c3a1a; color: #ffcc66; }
         .status-deal { background: #1a5c2a; color: #66ff88; }
-        .status-closed { background: #3a3a3a; color: #aaa; }
-        input, select, textarea { width: 100%; padding: 14px; border: 1px solid #333; border-radius: 14px; background: #1a1a1a; color: white; }
-        .save-btn { background: #ffd700; color: #111; border: none; padding: 16px; border-radius: 16px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%; }
-        .upload-btn { background: #1a5c2a; color: white; border: none; padding: 12px; border-radius: 16px; font-size: 14px; cursor: pointer; width: 100%; margin-top: 10px; }
+        .status-closed { background: #3a3a3a; color: #ccc; }
+        
+        /* Поля ввода - СВЕТЛЫЙ ТЕКСТ */
+        .input-group { margin-bottom: 16px; }
+        .input-group label { display: block; font-size: 13px; font-weight: 600; color: #ffd700; margin-bottom: 6px; }
+        input, select, textarea { width: 100%; padding: 14px; border: 1px solid #444; border-radius: 14px; background: #1a1a1a; color: #ffffff; font-size: 16px; font-family: inherit; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #ffd700; background: #222; }
+        textarea { resize: vertical; min-height: 80px; }
+        
+        /* Список подсказок улиц */
+        .suggestions { background: #1a1a1a; border-radius: 14px; margin-top: 5px; max-height: 150px; overflow-y: auto; border: 1px solid #333; }
+        .suggestion-item { padding: 12px; cursor: pointer; color: #ddd; border-bottom: 1px solid #333; }
+        .suggestion-item:hover { background: #ffd700; color: #111; }
+        
+        /* Кнопки */
+        .save-btn { background: #ffd700; color: #111; border: none; padding: 16px; border-radius: 16px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; }
+        .upload-btn { background: #2a4a2a; color: #fff; border: none; padding: 12px; border-radius: 16px; font-size: 14px; cursor: pointer; width: 100%; margin-top: 10px; }
+        
+        /* Файлы */
         .file-list { margin-top: 10px; padding: 10px; background: #1a1a1a; border-radius: 12px; }
         .file-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #333; }
         .file-name { color: #ffd700; font-size: 12px; }
-        .delete-file { background: none; border: none; color: #ff4444; cursor: pointer; font-size: 16px; }
+        .delete-file { background: none; border: none; color: #ff6666; cursor: pointer; font-size: 16px; }
+        
+        /* Диаграмма */
         .chart-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-        .chart-label { width: 80px; color: #aaa; }
-        .chart-fill { height: 24px; border-radius: 12px; background: #ffd700; }
-        .empty-state { text-align: center; padding: 40px; color: #666; }
+        .chart-label { width: 80px; color: #ccc; }
+        .chart-fill { height: 24px; border-radius: 12px; }
+        .empty-state { text-align: center; padding: 40px; color: #888; }
         .number-badge { background: #ffd700; color: #111; border-radius: 30px; padding: 8px 16px; display: inline-block; margin-bottom: 20px; font-weight: bold; }
-        hr { border-color: #222; margin: 20px 0; }
+        hr { border-color: #333; margin: 20px 0; }
         .deal-files { margin-top: 15px; border-top: 1px solid #333; padding-top: 15px; }
+        
+        /* Текст на чёрном фоне - ВЕЗДЕ БЕЛЫЙ */
+        p, h3, .client-name, .client-info, .empty-state { color: #fff; }
     </style>
 </head>
 <body>
@@ -54,11 +84,11 @@
     </div>
     
     <div class="filter-buttons">
-        <button class="filter-btn active" onclick="setFilter('all')">Все</button>
-        <button class="filter-btn" onclick="setFilter('Новый')">Новые</button>
-        <button class="filter-btn" onclick="setFilter('В работе')">В работе</button>
-        <button class="filter-btn" onclick="setFilter('Договор')">Договор</button>
-        <button class="filter-btn" onclick="setFilter('Закрыт')">Закрыты</button>
+        <button class="filter-btn active" onclick="setFilter('all')">📋 Все</button>
+        <button class="filter-btn" onclick="setFilter('Новый')">🟢 Новые</button>
+        <button class="filter-btn" onclick="setFilter('В работе')">🟡 В работе</button>
+        <button class="filter-btn" onclick="setFilter('Договор')">🔵 Договор</button>
+        <button class="filter-btn" onclick="setFilter('Закрыт')">✅ Закрыты</button>
     </div>
     
     <div class="menu-buttons">
@@ -71,6 +101,44 @@
 </div>
 <script>
 let clients = [], nextNumber = 1, currentFilter = 'all';
+
+// Улицы Ташкента для автоподсказок
+const streets = [
+    "Амира Темура", "Мустакиллик", "Навои", "Пушкина", "Буюк Ипак Йули",
+    "Фаробий", "Чиланзар", "Сергели", "Юнусабад", "Мирабад",
+    "Шота Руставели", "Тараккиёт", "Беруни", "Афросиаб", "Заркент",
+    "Олмазор", "Карасу", "Куйлюк", "Сагбан", "Узбекистон Овози"
+];
+
+function getStreetSuggestions(input) {
+    if(!input) return [];
+    let lower = input.toLowerCase();
+    return streets.filter(s => s.toLowerCase().includes(lower)).slice(0, 5);
+}
+
+function showAddressSuggestions(inputId, containerId) {
+    let input = document.getElementById(inputId);
+    let val = input.value;
+    let suggestions = getStreetSuggestions(val);
+    let container = document.getElementById(containerId);
+    if(suggestions.length === 0) { container.innerHTML = ''; return; }
+    let html = '<div class="suggestions">';
+    for(let s of suggestions) {
+        html += `<div class="suggestion-item" onclick="selectAddress('${inputId}', '${s.replace(/'/g, "\\'")}')">🏠 ${s}</div>`;
+    }
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function selectAddress(inputId, value) {
+    document.getElementById(inputId).value = value;
+    document.getElementById('address-suggestions').innerHTML = '';
+}
+
+function formatNumber(num) {
+    // Узбекская нумерация (пробел каждые 3 цифры)
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+}
 
 function load() { 
     let s = localStorage.getItem('clients'); 
@@ -93,10 +161,10 @@ async function sendFileToGroup(fileData, client, customCaption = '') {
         let formData = new FormData();
         formData.append('chat_id', CHAT_ID);
         formData.append('document', blob, fileData.name);
-        let caption = customCaption || `📎 ${fileData.name} к клиенту #${client.number} - ${client.name}`;
+        let caption = customCaption || `📎 ${fileData.name} | Клиент #${client.number} - ${client.name}`;
         formData.append('caption', caption);
         await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendDocument`, {method: 'POST', body: formData});
-    } catch(e) { console.log('Ошибка отправки файла:', e); }
+    } catch(e) { console.log(e); }
 }
 
 async function sendToGroup(c, isChange, newFiles = []) {
@@ -109,23 +177,24 @@ async function sendToGroup(c, isChange, newFiles = []) {
 
 function setFilter(s) { currentFilter = s; document.querySelectorAll('.filter-btn').forEach((btn,i)=>btn.classList.toggle('active', btn.innerText === s || (s==='all' && btn.innerText==='Все'))); showList(); }
 function getFiltered() { return currentFilter === 'all' ? clients : clients.filter(c => c.status === currentFilter); }
-function clearAll() { if(confirm('Удалить всех?')) { clients = []; nextNumber = 1; save(); showList(); } }
+function clearAll() { if(confirm('Удалить всех клиентов?')) { clients = []; nextNumber = 1; save(); showList(); } }
 
 function showAdd() {
-    document.getElementById('content').innerHTML = `<div class="card"><div class="number-badge">Новый клиент → #${nextNumber}</div>
-        <div class="input-group"><label>📛 Имя *</label><input id="name" placeholder="Иван Петров"></div>
-        <div class="input-group"><label>📞 Телефон</label><input id="phone" placeholder="+7 999 123-45-67"></div>
+    document.getElementById('content').innerHTML = `<div class="card"><div class="number-badge">Новый клиент → #${formatNumber(nextNumber)}</div>
+        <div class="input-group"><label>📛 Имя клиента *</label><input id="name" placeholder="Ислом Каримов"></div>
+        <div class="input-group"><label>📞 Телефон</label><input id="phone" placeholder="+998 90 123 45 67"></div>
         <div class="input-group"><label>📐 Площадь (м²)</label><input id="area" placeholder="75" type="number"></div>
-        <div class="input-group"><label>📍 Адрес</label><input id="address" placeholder="ул. Ленина, д. 10"></div>
+        <div class="input-group"><label>📍 Адрес объекта</label><input id="address" placeholder="Начните вводить улицу..." oninput="showAddressSuggestions('address', 'address-suggestions')"></div>
+        <div id="address-suggestions"></div>
         <div class="input-group"><label>📌 Статус</label><select id="status"><option>Новый</option><option>В работе</option><option>Договор</option><option>Закрыт</option></select></div>
-        <div class="input-group"><label>💬 Комментарий</label><textarea id="comment" rows="3"></textarea></div>
+        <div class="input-group"><label>💬 Комментарий</label><textarea id="comment" rows="3" placeholder="Дополнительная информация..."></textarea></div>
         <div class="input-group"><label>📎 Файлы (договор, смета, фото)</label><input type="file" id="files" multiple accept=".pdf,.doc,.docx,.jpg,.png,.xlsx"></div>
         <button class="save-btn" onclick="add()">✅ Сохранить</button></div>`;
 }
 
 async function add() {
     let name = document.getElementById('name').value;
-    if(!name) { alert('Введите имя'); return; }
+    if(!name) { alert('Введите имя клиента'); return; }
     let files = document.getElementById('files').files;
     let fileDataArray = [];
     for(let file of files) {
@@ -133,9 +202,9 @@ async function add() {
         let data = await new Promise(resolve => { reader.onload = e => resolve(e.target.result); reader.readAsDataURL(file); });
         fileDataArray.push({name: file.name, type: file.type, data: data});
     }
-    let c = { number: nextNumber, name: name, phone: document.getElementById('phone').value || '—', area: document.getElementById('area').value || '—', address: document.getElementById('address').value || '—', status: document.getElementById('status').value, comment: document.getElementById('comment').value || '—', time: new Date().toLocaleString(), files: fileDataArray, dealFiles: [] };
+    let c = { number: nextNumber, name: name, phone: document.getElementById('phone').value || '—', area: document.getElementById('area').value || '—', address: document.getElementById('address').value || '—', status: document.getElementById('status').value, comment: document.getElementById('comment').value || '—', time: new Date().toLocaleString('ru-RU'), files: fileDataArray, dealFiles: [] };
     clients.push(c); save(); await sendToGroup(c, false, fileDataArray); nextNumber++; showList();
-    alert(`✅ Клиент #${c.number} добавлен! Файлы отправлены в группу.`);
+    alert(`✅ Клиент #${formatNumber(c.number)} добавлен!`);
 }
 
 function showList() {
@@ -145,7 +214,7 @@ function showList() {
     for(let c of filtered) {
         let cls = c.status === 'Новый' ? 'status-new' : (c.status === 'В работе' ? 'status-work' : (c.status === 'Договор' ? 'status-deal' : 'status-closed'));
         let fileCount = (c.files ? c.files.length : 0) + (c.dealFiles ? c.dealFiles.length : 0);
-        html += `<div class="client-card" onclick="view(${c.number})"><div class="client-number">#${c.number}</div><div class="client-name">${c.name}</div><div class="client-info">📞 ${c.phone} | 📐 ${c.area} м² | 📎 ${fileCount}</div><div><span class="status-badge ${cls}">${c.status}</span></div></div>`;
+        html += `<div class="client-card" onclick="view(${c.number})"><div class="client-number">#${formatNumber(c.number)}</div><div class="client-name">${c.name}</div><div class="client-info">📞 ${c.phone} | 📐 ${c.area} м² | 📎 ${fileCount}</div><div><span class="status-badge ${cls}">${c.status}</span></div></div>`;
     }
     document.getElementById('content').innerHTML = html;
 }
@@ -168,13 +237,13 @@ function view(n) {
         dealFilesHtml += '</div>';
     }
     
-    let dealUploadHtml = c.status === 'Договор' ? `<div class="deal-files"><label>📄 Загрузить договор (PDF, DOC)</label><input type="file" id="dealFile" accept=".pdf,.doc,.docx"><button class="upload-btn" onclick="addDealFile(${n})">📤 Загрузить договор</button></div>` : '';
+    let dealUploadHtml = c.status === 'Договор' ? `<div class="deal-files"><label style="color:#ffd700;">📄 Загрузить договор (PDF, DOC)</label><input type="file" id="dealFile" accept=".pdf,.doc,.docx"><button class="upload-btn" onclick="addDealFile(${n})">📤 Загрузить договор</button></div>` : '';
     
-    document.getElementById('content').innerHTML = `<div class="card"><div class="number-badge">Клиент #${c.number}</div><h3>${c.name}</h3>
-        <p>📞 ${c.phone}</p><p>📐 ${c.area} м²</p><p>📍 ${c.address}</p><p><span class="status-badge ${cls}">${c.status}</span></p><p>💬 ${c.comment}</p><p>🕐 ${c.time}</p>${filesHtml}${dealFilesHtml}${dealUploadHtml}
-        <div class="input-group"><label>📎 Добавить файл</label><input type="file" id="newFile" accept=".pdf,.doc,.docx,.jpg,.png,.xlsx"></div>
+    document.getElementById('content').innerHTML = `<div class="card"><div class="number-badge">Клиент #${formatNumber(c.number)}</div><h3 style="color:#fff;">${c.name}</h3>
+        <p style="color:#ccc;">📞 ${c.phone}</p><p style="color:#ccc;">📐 ${c.area} м²</p><p style="color:#ccc;">📍 ${c.address}</p><p><span class="status-badge ${cls}">${c.status}</span></p><p style="color:#ccc;">💬 ${c.comment}</p><p style="color:#ccc;">🕐 ${c.time}</p>${filesHtml}${dealFilesHtml}${dealUploadHtml}
+        <div class="input-group"><label style="color:#ffd700;">📎 Добавить файл</label><input type="file" id="newFile" accept=".pdf,.doc,.docx,.jpg,.png,.xlsx"></div>
         <button class="upload-btn" onclick="addFile(${n})">📤 Добавить файл</button>
-        <select id="ns"><option ${c.status==='Новый'?'selected':''}>Новый</option><option ${c.status==='В работе'?'selected':''}>В работе</option><option ${c.status==='Договор'?'selected':''}>Договор</option><option ${c.status==='Закрыт'?'selected':''}>Закрыт</option></select>
+        <select id="ns" style="margin-top:15px;"><option ${c.status==='Новый'?'selected':''}>Новый</option><option ${c.status==='В работе'?'selected':''}>В работе</option><option ${c.status==='Договор'?'selected':''}>Договор</option><option ${c.status==='Закрыт'?'selected':''}>Закрыт</option></select>
         <button class="save-btn" onclick="change(${c.number})">🔄 Изменить статус</button>
         <button class="save-btn" style="background:#2a2a2a;color:white;margin-top:10px;" onclick="showList()">◀️ Назад</button></div>`;
 }
@@ -205,7 +274,7 @@ async function addDealFile(n) {
     if(!c.dealFiles) c.dealFiles = [];
     c.dealFiles.push(fileData);
     save();
-    await sendFileToGroup(fileData, c, `📄 ДОГОВОР клиента #${c.number} - ${c.name}`);
+    await sendFileToGroup(fileData, c, `📄 ДОГОВОР клиента #${formatNumber(c.number)} - ${c.name}`);
     alert(`✅ Договор "${file.name}" добавлен и отправлен в группу!`);
     view(n);
 }
@@ -227,7 +296,7 @@ async function change(n) {
         await sendToGroup(c, true); 
         alert(`✅ Статус изменён с "${old}" на "${newStatus}"!`);
         if(newStatus === 'Договор') {
-            alert(`📄 Теперь можно загрузить договор клиента #${c.number}`);
+            alert(`📄 Теперь можно загрузить договор для клиента #${formatNumber(c.number)}`);
         }
     }
     view(n);
@@ -238,11 +307,11 @@ function showStats() {
     clients.forEach(c => { if(c.area !== '—') areaTotal += parseFloat(c.area) || 0; if(c.files) fileTotal += c.files.length; if(c.dealFiles) fileTotal += c.dealFiles.length; });
     let maxC = Math.max(newC, workC, dealC, closedC, 1);
     document.getElementById('content').innerHTML = `<div class="card"><h3 style="text-align:center;color:#ffd700;">📊 СТАТИСТИКА</h3>
-        <p>👥 Всего: <b style="color:#ffd700;">${total}</b></p><p>📐 Площадь: <b>${areaTotal} м²</b></p><p>📎 Всего файлов: <b>${fileTotal}</b></p><hr>
-        <div class="chart-bar"><span class="chart-label">🟢 Новые</span><div class="chart-fill" style="width:${(newC/maxC)*100}%;background:#66ccff;"></div><span>${newC}</span></div>
-        <div class="chart-bar"><span class="chart-label">🟡 В работе</span><div class="chart-fill" style="width:${(workC/maxC)*100}%;background:#ffcc66;"></div><span>${workC}</span></div>
-        <div class="chart-bar"><span class="chart-label">🔵 Договор</span><div class="chart-fill" style="width:${(dealC/maxC)*100}%;background:#66ff88;"></div><span>${dealC}</span></div>
-        <div class="chart-bar"><span class="chart-label">✅ Закрыты</span><div class="chart-fill" style="width:${(closedC/maxC)*100}%;background:#aaa;"></div><span>${closedC}</span></div>
+        <p style="color:#fff;">👥 Всего: <b style="color:#ffd700;">${total}</b></p><p style="color:#fff;">📐 Площадь: <b style="color:#ffd700;">${areaTotal} м²</b></p><p style="color:#fff;">📎 Файлов: <b style="color:#ffd700;">${fileTotal}</b></p><hr>
+        <div class="chart-bar"><span class="chart-label">🟢 Новые</span><div class="chart-fill" style="width:${(newC/maxC)*100}%;background:#66ccff;"></div><span style="color:#fff;">${newC}</span></div>
+        <div class="chart-bar"><span class="chart-label">🟡 В работе</span><div class="chart-fill" style="width:${(workC/maxC)*100}%;background:#ffcc66;"></div><span style="color:#fff;">${workC}</span></div>
+        <div class="chart-bar"><span class="chart-label">🔵 Договор</span><div class="chart-fill" style="width:${(dealC/maxC)*100}%;background:#66ff88;"></div><span style="color:#fff;">${dealC}</span></div>
+        <div class="chart-bar"><span class="chart-label">✅ Закрыты</span><div class="chart-fill" style="width:${(closedC/maxC)*100}%;background:#aaa;"></div><span style="color:#fff;">${closedC}</span></div>
         <button class="save-btn" style="background:#2a2a2a;color:white;margin-top:20px;" onclick="showList()">◀️ Назад</button></div>`;
 }
 
