@@ -6,86 +6,203 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #0a0a0a; padding: 20px; font-family: Arial, sans-serif; }
-        .app-container { max-width: 500px; margin: 0 auto; }
-        .header { background: #111; border-radius: 28px; padding: 20px; text-align: center; margin-bottom: 20px; border: 1px solid #333; }
-        .logo span:first-child { color: #fff; }
-        .logo span:last-child { color: #ffd700; }
-        .sub { font-size: 12px; color: #aaa; margin-top: 5px; }
         
-        .role-badge { background: #ffd700; color: #111; border-radius: 20px; padding: 5px 12px; font-size: 12px; display: inline-block; }
+        /* CSS переменные для тем */
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #111;
+            --bg-card: #111;
+            --bg-input: #1a1a1a;
+            --text-primary: #ffffff;
+            --text-secondary: #ccc;
+            --text-muted: #888;
+            --border-color: #333;
+            --accent-color: #ffd700;
+            --accent-text: #111;
+            --success-bg: #1a3a1a;
+            --success-text: #66ff88;
+            --status-new-bg: #1a3a5c;
+            --status-new-text: #66ccff;
+            --status-work-bg: #5c3a1a;
+            --status-work-text: #ffcc66;
+            --status-deal-bg: #1a5c2a;
+            --status-deal-text: #66ff88;
+            --status-closed-bg: #3a3a3a;
+            --status-closed-text: #ccc;
+        }
+        
+        [data-theme="light"] {
+            --bg-primary: #f5f5f5;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --bg-input: #f0f0f0;
+            --text-primary: #111111;
+            --text-secondary: #555;
+            --text-muted: #888;
+            --border-color: #ddd;
+            --accent-color: #ffd700;
+            --accent-text: #111;
+            --success-bg: #dcfce7;
+            --success-text: #16a34a;
+            --status-new-bg: #e0f2fe;
+            --status-new-text: #0284c7;
+            --status-work-bg: #fef3c7;
+            --status-work-text: #d97706;
+            --status-deal-bg: #dcfce7;
+            --status-deal-text: #16a34a;
+            --status-closed-bg: #f1f5f9;
+            --status-closed-text: #475569;
+        }
+        
+        body { background: var(--bg-primary); padding: 20px; font-family: Arial, sans-serif; transition: all 0.3s ease; }
+        .app-container { max-width: 600px; margin: 0 auto; }
+        .header { background: var(--bg-secondary); border-radius: 28px; padding: 20px; text-align: center; margin-bottom: 20px; border: 1px solid var(--border-color); }
+        .logo span:first-child { color: var(--text-primary); }
+        .logo span:last-child { color: var(--accent-color); }
+        .sub { font-size: 12px; color: var(--text-muted); margin-top: 5px; }
+        
+        /* Поиск */
+        .search-box { margin-bottom: 15px; }
+        .search-box input { width: 100%; padding: 14px; border-radius: 30px; border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-primary); font-size: 16px; }
+        .search-box input:focus { outline: none; border-color: var(--accent-color); }
+        
+        .role-badge { background: var(--accent-color); color: var(--accent-text); border-radius: 20px; padding: 5px 12px; font-size: 12px; display: inline-block; }
         .filter-buttons { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
-        .filter-btn { flex: 1; background: #1a1a1a; border: none; padding: 10px; border-radius: 30px; color: #ccc; cursor: pointer; font-size: 12px; }
-        .filter-btn.active { background: #ffd700; color: #111; }
+        .filter-btn { flex: 1; background: var(--bg-input); border: none; padding: 10px; border-radius: 30px; color: var(--text-secondary); cursor: pointer; font-size: 12px; }
+        .filter-btn.active { background: var(--accent-color); color: var(--accent-text); }
         .menu-buttons { display: flex; gap: 12px; margin-bottom: 20px; }
-        .menu-btn { flex: 1; background: #1a1a1a; border: none; padding: 14px; border-radius: 16px; color: white; cursor: pointer; }
+        .menu-btn { flex: 1; background: var(--bg-input); border: none; padding: 14px; border-radius: 16px; color: var(--text-primary); cursor: pointer; }
         
-        .fab { position: fixed; bottom: 30px; right: 20px; width: 60px; height: 60px; background: #ffd700; border-radius: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1000; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        /* Таблица клиентов */
+        .clients-table { width: 100%; border-collapse: collapse; }
+        .clients-table th { text-align: left; padding: 12px; color: var(--accent-color); border-bottom: 2px solid var(--border-color); font-size: 14px; }
+        .clients-table td { padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); cursor: pointer; }
+        .clients-table tr:hover { background: var(--bg-input); }
+        .client-row { cursor: pointer; }
+        .client-row:active { opacity: 0.7; }
+        
+        /* Цепочка статусов */
+        .status-chain {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-input);
+            border-radius: 40px;
+            padding: 8px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        .status-step {
+            flex: 1;
+            text-align: center;
+            padding: 8px 5px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: bold;
+            opacity: 0.5;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .status-step.active {
+            opacity: 1;
+            background: var(--accent-color);
+            color: var(--accent-text);
+        }
+        .status-step.completed {
+            opacity: 1;
+            background: var(--success-bg);
+            color: var(--success-text);
+        }
+        .status-step.new { border-left: 3px solid var(--status-new-text); }
+        .status-step.work { border-left: 3px solid var(--status-work-text); }
+        .status-step.deal { border-left: 3px solid var(--status-deal-text); }
+        .status-step.closed { border-left: 3px solid var(--status-closed-text); }
+        
+        .fab { position: fixed; bottom: 30px; right: 20px; width: 60px; height: 60px; background: var(--accent-color); border-radius: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1000; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
         .fab:active { transform: scale(0.95); }
-        .fab span { font-size: 32px; font-weight: bold; color: #111; }
+        .fab span { font-size: 32px; font-weight: bold; color: var(--accent-text); }
         
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1001; justify-content: center; align-items: center; padding: 20px; }
         .modal.show { display: flex; }
-        .modal-content { background: #111; border-radius: 28px; max-width: 500px; width: 100%; max-height: 90%; overflow-y: auto; border: 1px solid #333; padding: 20px; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 15px; }
-        .modal-header h3 { color: #ffd700; }
-        .close-modal { background: none; border: none; font-size: 28px; cursor: pointer; color: #aaa; }
+        .modal-content { background: var(--bg-card); border-radius: 28px; max-width: 500px; width: 100%; max-height: 90%; overflow-y: auto; border: 1px solid var(--border-color); padding: 20px; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; }
+        .modal-header h3 { color: var(--accent-color); }
+        .close-modal { background: none; border: none; font-size: 28px; cursor: pointer; color: var(--text-muted); }
         
-        .card { background: #111; border-radius: 24px; padding: 20px; margin-bottom: 12px; border: 1px solid #333; }
-        .client-card { background: #111; border-radius: 20px; padding: 16px; margin-bottom: 12px; cursor: pointer; border-left: 4px solid #ffd700; }
-        .client-name { font-size: 18px; font-weight: bold; color: #fff; }
-        .client-number { background: #ffd700; color: #111; border-radius: 20px; padding: 4px 12px; font-size: 12px; display: inline-block; }
-        .client-info { font-size: 14px; color: #ccc; margin-top: 8px; }
-        .author-info { font-size: 11px; color: #ffd700; margin-top: 8px; border-top: 1px solid #333; padding-top: 8px; }
-        
-        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
-        .status-new { background: #1a3a5c; color: #66ccff; }
-        .status-work { background: #5c3a1a; color: #ffcc66; }
-        .status-deal { background: #1a5c2a; color: #66ff88; }
-        .status-closed { background: #3a3a3a; color: #ccc; }
-        
+        .card { background: var(--bg-card); border-radius: 24px; padding: 20px; margin-bottom: 12px; border: 1px solid var(--border-color); }
         .input-group { margin-bottom: 16px; }
-        .input-group label { display: block; font-size: 13px; font-weight: 600; color: #ffd700; margin-bottom: 6px; }
-        input, select, textarea { width: 100%; padding: 14px; border: 1px solid #444; border-radius: 14px; background: #1a1a1a; color: #fff; font-size: 16px; }
-        .save-btn { background: #ffd700; color: #111; border: none; padding: 16px; border-radius: 16px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; }
+        .input-group label { display: block; font-size: 13px; font-weight: 600; color: var(--accent-color); margin-bottom: 6px; }
+        input, select, textarea { width: 100%; padding: 14px; border: 1px solid var(--border-color); border-radius: 14px; background: var(--bg-input); color: var(--text-primary); font-size: 16px; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent-color); }
+        .save-btn { background: var(--accent-color); color: var(--accent-text); border: none; padding: 16px; border-radius: 16px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; }
         .quick-form-row { display: flex; gap: 10px; margin-bottom: 15px; }
         .quick-form-row .input-group { flex: 1; margin-bottom: 0; }
         
-        .success-toast { position: fixed; bottom: 100px; left: 20px; right: 20px; background: #1a3a1a; border-radius: 16px; padding: 12px; text-align: center; color: #66ff88; z-index: 1002; }
-        .price-badge { background: #ffd700; color: #111; border-radius: 20px; padding: 4px 12px; font-size: 12px; display: inline-block; margin-top: 8px; }
-        .empty-state { text-align: center; padding: 40px; color: #888; }
-        .number-badge { background: #ffd700; color: #111; border-radius: 30px; padding: 8px 16px; display: inline-block; margin-bottom: 20px; font-weight: bold; }
-        hr { border-color: #333; margin: 20px 0; }
-        p, h3 { color: #fff; }
-        .deal-section { border-top: 1px solid #333; margin-top: 15px; padding-top: 15px; }
-        .profit-total { background: #1a3a1a; border-radius: 16px; padding: 12px; text-align: center; margin-top: 10px; }
-        .manager-select { background: #1a1a1a; border-radius: 16px; padding: 16px; margin-bottom: 15px; border: 1px solid #333; }
+        .success-toast { position: fixed; bottom: 100px; left: 20px; right: 20px; background: var(--success-bg); border-radius: 16px; padding: 12px; text-align: center; color: var(--success-text); z-index: 1002; }
+        .price-badge { background: var(--accent-color); color: var(--accent-text); border-radius: 20px; padding: 4px 12px; font-size: 12px; display: inline-block; }
+        .empty-state { text-align: center; padding: 40px; color: var(--text-muted); }
+        .number-badge { background: var(--accent-color); color: var(--accent-text); border-radius: 30px; padding: 8px 16px; display: inline-block; margin-bottom: 20px; font-weight: bold; }
+        hr { border-color: var(--border-color); margin: 20px 0; }
+        p, h3 { color: var(--text-primary); }
+        .profit-total { background: var(--success-bg); border-radius: 16px; padding: 12px; text-align: center; margin-top: 10px; }
+        .manager-select { background: var(--bg-input); border-radius: 16px; padding: 16px; margin-bottom: 15px; border: 1px solid var(--border-color); }
+        .logout-btn { background: var(--bg-input); border: 1px solid var(--border-color); padding: 8px 16px; border-radius: 20px; color: var(--text-muted); cursor: pointer; font-size: 12px; margin-left: 10px; }
+        .theme-toggle { background: var(--bg-input); border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 20px; cursor: pointer; font-size: 12px; color: var(--text-primary); margin-left: 10px; }
+        
+        .login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-primary); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .login-card { background: var(--bg-card); border-radius: 32px; padding: 30px 20px; text-align: center; border: 1px solid var(--border-color); width: 100%; max-width: 350px; }
+        .login-title { font-size: 24px; color: var(--accent-color); margin-bottom: 10px; }
+        .login-sub { color: var(--text-muted); font-size: 14px; margin-bottom: 30px; }
+        .login-btn { background: var(--bg-input); border: 1px solid var(--border-color); padding: 16px; border-radius: 20px; color: var(--text-primary); font-size: 18px; margin-bottom: 12px; cursor: pointer; width: 100%; text-align: center; }
+        .login-btn.admin { border-left: 4px solid var(--accent-color); }
     </style>
 </head>
 <body>
+
+<div id="loginScreen" class="login-screen" style="display: none;">
+    <div class="login-card">
+        <div class="login-title">🤖 NEOSTYLE CRM</div>
+        <div class="login-sub">Выберите менеджера</div>
+        <div class="login-btn admin" onclick="selectManager('admin')">👑 АДМИН (Полный доступ)</div>
+        <div class="login-btn" onclick="selectManager('sultan')">👤 СУЛТАН</div>
+        <div class="login-btn" onclick="selectManager('abdulloh')">👤 АБДУЛЛОХ</div>
+        <div class="login-btn" onclick="selectManager('shahzod')">👤 ШАХЗОД</div>
+    </div>
+</div>
+
+<div id="appContent" style="display: none;">
 <div class="app-container">
     <div class="header">
         <div class="logo"><span>NEO</span><span>STYLE</span></div>
         <div class="sub">ARCHITECTURAL GROUP</div>
     </div>
     
-    <div style="background:#1a1a1a; border-radius: 30px; padding: 10px 16px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
-        <span style="color:#ccc;">👤</span>
+    <div style="background: var(--bg-input); border-radius: 30px; padding: 10px 16px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <span style="color: var(--text-secondary);">👤</span>
         <span class="role-badge" id="userInfo">Загрузка...</span>
+        <button class="theme-toggle" onclick="toggleTheme()">🌓 Тема</button>
+        <button class="logout-btn" onclick="showLoginScreen()">🔄 Сменить</button>
+    </div>
+    
+    <!-- Поиск -->
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="🔍 Поиск по имени, телефону или адресу..." onkeyup="filterTable()">
     </div>
     
     <div class="filter-buttons">
         <button class="filter-btn active" onclick="setFilter('all')">Все</button>
-        <button class="filter-btn" onclick="setFilter('Новый')">Новые</button>
-        <button class="filter-btn" onclick="setFilter('В работе')">В работе</button>
-        <button class="filter-btn" onclick="setFilter('Договор')">Договор</button>
-        <button class="filter-btn" onclick="setFilter('Закрыт')">Закрыты</button>
+        <button class="filter-btn" onclick="setFilter('Новый')">🟢 Новые</button>
+        <button class="filter-btn" onclick="setFilter('В работе')">🟡 В работе</button>
+        <button class="filter-btn" onclick="setFilter('Договор')">🔵 Договор</button>
+        <button class="filter-btn" onclick="setFilter('Закрыт')">✅ Закрыты</button>
     </div>
     
     <div class="menu-buttons">
-        <button class="menu-btn" onclick="showList()">Список</button>
-        <button class="menu-btn" onclick="showStats()">Статистика</button>
+        <button class="menu-btn" onclick="showTableView()">📋 Таблица</button>
+        <button class="menu-btn" onclick="showStats()">📊 Статистика</button>
     </div>
+    
     <div id="content"></div>
 </div>
 
@@ -95,27 +212,19 @@
     <div class="modal-content">
         <div class="modal-header"><h3>➕ Новый клиент</h3><button class="close-modal" onclick="closeQuickForm()">✕</button></div>
         <div class="number-badge" id="quickNumber">Новый клиент → #1</div>
-        
-        <!-- ВЫБОР МЕНЕДЖЕРА (только для админа) -->
         <div id="managerSelectDiv" class="manager-select" style="display:none;">
             <label>👥 Назначить менеджера:</label>
             <select id="managerSelect">
-                <option value="954221831">👑 Админ</option>
+                <option value="admin">👑 Админ</option>
                 <option value="sultan">👤 Султан</option>
                 <option value="abdulloh">👤 Абдуллох</option>
                 <option value="shahzod">👤 Шахзод</option>
             </select>
         </div>
-        
         <div class="input-group"><label>📛 Имя *</label><input id="quickName" placeholder="Ислом Каримов" autofocus></div>
         <div class="quick-form-row"><div class="input-group"><label>📞 Телефон</label><input id="quickPhone" placeholder="+998 90 123 45 67"></div><div class="input-group"><label>📐 Площадь</label><input id="quickArea" placeholder="75" type="number"></div></div>
         <div class="input-group"><label>📍 Адрес</label><input id="quickAddress" placeholder="ул. Навои, 15"></div>
-        <div class="input-group"><label>📌 Статус</label>
-            <select id="quickStatus">
-                <option value="Новый">Новый</option>
-                <option value="В работе">В работе</option>
-            </select>
-        </div>
+        <div class="input-group"><label>📌 Статус</label><select id="quickStatus"><option value="Новый">Новый</option><option value="В работе">В работе</option></select></div>
         <div class="input-group"><label>💬 Комментарий</label><textarea id="quickComment" rows="2" placeholder="Дополнительная информация..."></textarea></div>
         <div class="input-group"><label>📎 Файлы</label><input type="file" id="quickFiles" multiple accept=".pdf,.doc,.docx,.jpg,.png,.mp3,.m4a,.ogg,.wav"></div>
         <button class="save-btn" onclick="quickAdd()">✅ Добавить клиента</button>
@@ -123,118 +232,124 @@
 </div>
 
 <div id="toast" style="display:none;" class="success-toast"></div>
+</div>
 
 <script>
-// ========== ТВОЙ АДМИН ID ==========
-const ADMIN_ID = 954221831;
-
-// ========== СПИСОК МЕНЕДЖЕРОВ ==========
-const MANAGERS = {
-    '954221831': { name: 'Админ', shortName: '👑 Админ', isAdmin: true },
-    'sultan': { name: 'Султан', shortName: '👤 Султан', isAdmin: false },
-    'abdulloh': { name: 'Абдуллох', shortName: '👤 Абдуллох', isAdmin: false },
-    'shahzod': { name: 'Шахзод', shortName: '👤 Шахзод', isAdmin: false }
-};
-
-// ========== ТЕКУЩИЙ ПОЛЬЗОВАТЕЛЬ ==========
-let currentUser = {
-    id: null,
-    name: null,
-    isAdmin: false
-};
-
-// ========== ДАННЫЕ ==========
-let clients = [], nextNumber = 1, currentFilter = 'all';
-
-// ========== ПОЛУЧАЕМ ДАННЫЕ ИЗ TELEGRAM ==========
-function initUser() {
-    // Получаем данные из Telegram WebApp
-    if(window.Telegram && Telegram.WebApp) {
-        let initData = Telegram.WebApp.initDataUnsafe;
-        if(initData && initData.user) {
-            currentUser.id = initData.user.id;
-            currentUser.name = initData.user.first_name || (initData.user.username ? '@'+initData.user.username : 'Пользователь');
-            // ТОЛЬКО ЕСЛИ ID СОВПАДАЕТ С ADMIN_ID — ТОГДА АДМИН
-            currentUser.isAdmin = (String(currentUser.id) === String(ADMIN_ID));
-        } else {
-            currentUser.id = 'unknown';
-            currentUser.name = 'Гость';
-            currentUser.isAdmin = false;
-        }
-    } else {
-        // Вне Telegram — для теста (никто не админ)
-        currentUser.id = 'browser_' + Date.now();
-        currentUser.name = 'Гость';
-        currentUser.isAdmin = false;
-    }
-    
-    let roleText = '';
-    if(currentUser.isAdmin) {
-        roleText = '👑 АДМИН';
-    } else {
-        let manager = MANAGERS[currentUser.id];
-        if(manager) {
-            roleText = manager.shortName;
-        } else {
-            roleText = '👤 МЕНЕДЖЕР';
-        }
-    }
-    document.getElementById('userInfo').innerHTML = `${currentUser.name} ${roleText}`;
-    
-    // Показываем выбор менеджера только для админа
-    if(currentUser.isAdmin) {
-        let div = document.getElementById('managerSelectDiv');
-        if(div) div.style.display = 'block';
-    }
+// ========== ТЕМА ==========
+function initTheme() {
+    let savedTheme = localStorage.getItem('theme');
+    if(savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
+    else if(window.Telegram && Telegram.WebApp && Telegram.WebApp.colorScheme) document.documentElement.setAttribute('data-theme', Telegram.WebApp.colorScheme === 'dark' ? 'dark' : 'light');
+    else document.documentElement.setAttribute('data-theme', 'dark');
 }
+function toggleTheme() { let current = document.documentElement.getAttribute('data-theme'); let newTheme = current === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', newTheme); localStorage.setItem('theme', newTheme); showToast(`🌓 Тема изменена`); }
 
-// ========== ФИЛЬТРАЦИЯ КЛИЕНТОВ ==========
+const MANAGERS = { 'admin': { id: 'admin', name: 'Админ', shortName: '👑 Админ', isAdmin: true }, 'sultan': { id: 'sultan', name: 'Султан', shortName: '👤 Султан', isAdmin: false }, 'abdulloh': { id: 'abdulloh', name: 'Абдуллох', shortName: '👤 Абдуллох', isAdmin: false }, 'shahzod': { id: 'shahzod', name: 'Шахзод', shortName: '👤 Шахзод', isAdmin: false } };
+let currentUser = { id: null, name: null, isAdmin: false };
+let clients = [], nextNumber = 1, currentFilter = 'all', searchQuery = '';
+
+function selectManager(managerId) { let user = MANAGERS[managerId]; if(user) { currentUser.id = user.id; currentUser.name = user.name; currentUser.isAdmin = user.isAdmin; localStorage.setItem('currentUserId', currentUser.id); document.getElementById('loginScreen').style.display = 'none'; document.getElementById('appContent').style.display = 'block'; updateUserInfo(); showTableView(); } }
+function showLoginScreen() { document.getElementById('loginScreen').style.display = 'flex'; document.getElementById('appContent').style.display = 'none'; }
+function updateUserInfo() { let roleText = currentUser.isAdmin ? '👑 АДМИН' : `👤 ${currentUser.name}`; document.getElementById('userInfo').innerHTML = `${currentUser.name} ${roleText}`; let div = document.getElementById('managerSelectDiv'); if(div) div.style.display = currentUser.isAdmin ? 'block' : 'none'; }
+function load() { let s = localStorage.getItem('clients'); if(s) clients = JSON.parse(s); let n = localStorage.getItem('nextNumber'); if(n) nextNumber = parseInt(n); }
+function save() { localStorage.setItem('clients', JSON.stringify(clients)); localStorage.setItem('nextNumber', nextNumber); }
+function formatNumber(num) { if(!num) return '0'; return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " "); }
+function formatPrice(priceSum) { if(!priceSum || priceSum === '—') return '—'; return parseFloat(priceSum).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " сум"; }
+
 function getFilteredClients() {
     let filtered = clients;
-    if(currentFilter !== 'all') {
-        filtered = filtered.filter(c => c.status === currentFilter);
-    }
-    // Если не админ — показываем только своих клиентов
-    if(!currentUser.isAdmin) {
-        filtered = filtered.filter(c => String(c.authorId) === String(currentUser.id));
-    }
-    return filtered;
+    if(currentFilter !== 'all') filtered = filtered.filter(c => c.status === currentFilter);
+    if(!currentUser.isAdmin) filtered = filtered.filter(c => c.authorId === currentUser.id);
+    if(searchQuery) { let q = searchQuery.toLowerCase(); filtered = filtered.filter(c => c.name.toLowerCase().includes(q) || c.phone.toLowerCase().includes(q) || c.address.toLowerCase().includes(q)); }
+    return filtered.sort((a,b) => a.number - b.number);
 }
 
-function formatNumber(num) { 
-    if(!num) return '0';
-    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " "); 
-}
-function formatPrice(priceSum) {
-    if(!priceSum || priceSum === '—') return '—';
-    let num = parseFloat(priceSum);
-    return num.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " сум";
+function filterTable() { searchQuery = document.getElementById('searchInput').value; showTableView(); }
+
+function showTableView() {
+    let filtered = getFilteredClients();
+    if(!filtered.length) { document.getElementById('content').innerHTML = '<div class="card empty-state">📭 Нет клиентов</div>'; return; }
+    let html = '<table class="clients-table"><thead><tr><th>#</th><th>Имя</th><th>Телефон</th><th>Площадь</th><th>Статус</th><th>Менеджер</th></tr></thead><tbody>';
+    for(let c of filtered) {
+        let cls = c.status === 'Новый' ? 'status-new' : (c.status === 'В работе' ? 'status-work' : (c.status === 'Договор' ? 'status-deal' : 'status-closed'));
+        let managerDisplay = MANAGERS[c.authorId] ? MANAGERS[c.authorId].shortName : (c.authorName || c.authorId);
+        html += `<tr class="client-row" onclick="viewClient(${c.number})">
+            <td>#${formatNumber(c.number)}</td>
+            <td><strong>${c.name}</strong></td>
+            <td>${c.phone}</td>
+            <td>${c.area} м²</td>
+            <td><span class="status-badge ${cls}" style="padding:4px 8px;">${c.status}</span></td>
+            <td>${managerDisplay}</td>
+        </tr>`;
+    }
+    html += '</tbody></table>';
+    document.getElementById('content').innerHTML = html;
 }
 
-function load() { 
-    let s = localStorage.getItem('clients'); 
-    if(s) clients = JSON.parse(s); 
-    let n = localStorage.getItem('nextNumber'); 
-    if(n) nextNumber = parseInt(n); 
+function viewClient(n) {
+    let c = clients.find(x=>x.number===n);
+    if(!c) { showTableView(); return; }
+    if(!currentUser.isAdmin && c.authorId !== currentUser.id) { showToast(`❌ Это не ваш клиент!`); showTableView(); return; }
+    
+    let statusSteps = ['Новый', 'В работе', 'Договор', 'Закрыт'];
+    let currentStepIndex = statusSteps.indexOf(c.status);
+    let statusChainHtml = '<div class="status-chain">';
+    for(let i=0; i<statusSteps.length; i++) {
+        let step = statusSteps[i];
+        let stepClass = '';
+        let isActive = (i === currentStepIndex);
+        let isCompleted = (i < currentStepIndex);
+        if(isActive) stepClass = 'active';
+        if(isCompleted) stepClass = 'completed';
+        statusChainHtml += `<div class="status-step ${stepClass} ${step === 'Новый' ? 'new' : (step === 'В работе' ? 'work' : (step === 'Договор' ? 'deal' : 'closed'))}" onclick="changeClientStatusDirect(${c.number}, '${step}')">${step === 'Новый' ? '🟢' : (step === 'В работе' ? '🟡' : (step === 'Договор' ? '🔵' : '✅'))} ${step}</div>`;
+    }
+    statusChainHtml += '</div>';
+    
+    let dealSection = '';
+    if(c.status === 'Договор' && !c.dealSigned) {
+        dealSection = `<div class="deal-section"><div class="input-group"><label>💰 Сумма договора (сум)</label><input id="dealPrice" type="number" placeholder="Введите сумму"></div><div class="input-group"><label>📄 Файл договора</label><input type="file" id="dealFile" accept=".pdf,.doc,.docx"></div><button class="save-btn" onclick="signDeal(${c.number})">✅ Подписать договор</button></div>`;
+    } else if(c.status === 'Договор' && c.dealSigned) {
+        dealSection = `<div class="deal-section" style="border-color:#66ff88;"><label style="color:#66ff88;">✅ ДОГОВОР ПОДПИСАН</label>${currentUser.isAdmin ? `<p style="color:#ffd700;">💰 Сумма: ${formatPrice(c.priceSum)}</p>` : '<p style="color:#888;">💰 Сумма: скрыта</p>'}</div>`;
+    }
+    
+    let managerDisplay = MANAGERS[c.authorId] ? MANAGERS[c.authorId].shortName : (c.authorName || c.authorId);
+    document.getElementById('content').innerHTML = `<div class="card">
+        <div class="number-badge">Клиент #${formatNumber(c.number)}</div>
+        <h3>${c.name}</h3>
+        <p>📞 ${c.phone}</p><p>📐 ${c.area} м²</p><p>📍 ${c.address}</p>
+        <p>💬 ${c.comment}</p><p>🕐 ${c.time}</p>
+        <div class="author-info">👤 Менеджер: ${managerDisplay}</div>
+        ${statusChainHtml}
+        ${currentUser.isAdmin && c.priceSum !== '—' ? `<p>💰 ${formatPrice(c.priceSum)}</p>` : ''}
+        ${dealSection}
+        <button class="save-btn" style="background:var(--bg-input);color:var(--text-primary);margin-top:10px;" onclick="showTableView()">◀️ Назад к таблице</button>
+    </div>`;
 }
-function save() { 
-    localStorage.setItem('clients', JSON.stringify(clients)); 
-    localStorage.setItem('nextNumber', nextNumber);
+
+async function changeClientStatusDirect(number, newStatus) {
+    let c = clients.find(x => x.number === number);
+    if(!c) return;
+    let oldStatus = c.status;
+    if(oldStatus === newStatus) return;
+    if(!currentUser.isAdmin && c.authorId !== currentUser.id) { showToast(`❌ Вы можете менять статус только у своих клиентов!`); return; }
+    if(oldStatus === 'Договор' && c.dealSigned && newStatus !== 'Закрыт') { showToast(`❌ Договор подписан! Можно изменить только на "Закрыт"`); return; }
+    
+    c.status = newStatus;
+    if(newStatus === 'Договор') { /* Ждём подписания */ }
+    save();
+    await sendToGroup(c, 'status');
+    showToast(`✅ Статус клиента #${c.number} изменён на "${newStatus}"`);
+    viewClient(number);
 }
 
 const CHAT_ID = -1003831665624;
 const BOT_TOKEN = "8628159718:AAH8tPnTX0fReDzpByMG44A-iF6HG-Pm5-8";
 
 async function sendToGroup(c, eventType = 'new') {
-    let title = '';
-    if(eventType === 'new') title = `🆕 НОВЫЙ КЛИЕНТ #${c.number}`;
-    else if(eventType === 'status') title = `🔄 ИЗМЕНЕНИЕ СТАТУСА`;
-    else if(eventType === 'deal') title = `✅ ПОДПИСАН ДОГОВОР #${c.number}`;
-    
-    let managerName = MANAGERS[c.authorId] ? MANAGERS[c.authorId].name : (c.authorName || 'Неизвестный');
+    let title = eventType === 'new' ? `🆕 НОВЫЙ КЛИЕНТ #${c.number}` : (eventType === 'status' ? `🔄 ИЗМЕНЕНИЕ СТАТУСА` : `✅ ПОДПИСАН ДОГОВОР #${c.number}`);
     let message = `${title}\n\n📛 Имя: ${c.name}\n📞 Телефон: ${c.phone}\n📐 Площадь: ${c.area} м²\n📍 Адрес: ${c.address}\n📌 Статус: ${c.status}`;
     if(c.priceSum && c.priceSum !== '—') message += `\n💰 Сумма: ${formatPrice(c.priceSum)}`;
-    message += `\n💬 Комментарий: ${c.comment}\n\n👤 Менеджер: ${managerName}\n🕐 ${new Date().toLocaleString()}`;
+    message += `\n💬 Комментарий: ${c.comment}\n\n👤 Менеджер: ${c.authorName}\n🕐 ${new Date().toLocaleString()}`;
     let url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(message)}`;
     try { await fetch(url); } catch(e) { console.log(e); }
 }
@@ -253,22 +368,14 @@ async function sendFileToGroup(fileData, clientNumber, clientName) {
     } catch(e) { console.log(e); }
 }
 
-function updateQuickNumber() { 
-    let badge = document.getElementById('quickNumber'); 
-    if(badge) badge.innerHTML = `Новый клиент → #${formatNumber(nextNumber)}`; 
-}
-function openQuickForm() { 
-    document.getElementById('quickModal').classList.add('show'); 
-    document.getElementById('quickName').focus(); 
-    updateQuickNumber(); 
-}
+function updateQuickNumber() { let badge = document.getElementById('quickNumber'); if(badge) badge.innerHTML = `Новый клиент → #${formatNumber(nextNumber)}`; }
+function openQuickForm() { document.getElementById('quickModal').classList.add('show'); document.getElementById('quickName').focus(); updateQuickNumber(); }
 function closeQuickForm() { document.getElementById('quickModal').classList.remove('show'); }
 function showToast(msg) { let t = document.getElementById('toast'); t.innerHTML = msg; t.style.display = 'block'; setTimeout(() => { t.style.display = 'none'; }, 3000); }
 
 async function quickAdd() {
     let name = document.getElementById('quickName').value;
     if(!name) { alert('Введите имя клиента'); return; }
-    
     let files = document.getElementById('quickFiles').files;
     let fileDataArray = [];
     for(let f of files) {
@@ -276,185 +383,31 @@ async function quickAdd() {
         let data = await new Promise(r => { reader.onload = e => r(e.target.result); reader.readAsDataURL(f); });
         fileDataArray.push({name: f.name, type: f.type, data: data});
     }
-    
-    // Определяем кто добавляет
     let authorId, authorName;
     if(currentUser.isAdmin && document.getElementById('managerSelect') && document.getElementById('managerSelect').value) {
-        authorId = document.getElementById('managerSelect').value;
-        authorName = MANAGERS[authorId] ? MANAGERS[authorId].name : authorId;
+        let selectedId = document.getElementById('managerSelect').value;
+        authorId = selectedId;
+        authorName = MANAGERS[selectedId] ? MANAGERS[selectedId].name : selectedId;
     } else {
         authorId = currentUser.id;
         authorName = currentUser.name;
     }
-    
-    let newClient = {
-        number: nextNumber,
-        name: name,
-        phone: document.getElementById('quickPhone').value || '—',
-        area: document.getElementById('quickArea').value || '—',
-        address: document.getElementById('quickAddress').value || '—',
-        status: document.getElementById('quickStatus').value,
-        priceSum: '—',
-        comment: document.getElementById('quickComment').value || '—',
-        time: new Date().toLocaleString('ru-RU'),
-        files: fileDataArray,
-        dealFiles: [],
-        dealSigned: false,
-        authorId: authorId,
-        authorName: authorName
-    };
-    
-    clients.push(newClient);
-    save();
-    await sendToGroup(newClient, 'new');
+    let newClient = { number: nextNumber, name: name, phone: document.getElementById('quickPhone').value || '—', area: document.getElementById('quickArea').value || '—', address: document.getElementById('quickAddress').value || '—', status: document.getElementById('quickStatus').value, priceSum: '—', comment: document.getElementById('quickComment').value || '—', time: new Date().toLocaleString('ru-RU'), files: fileDataArray, dealFiles: [], dealSigned: false, authorId: authorId, authorName: authorName };
+    clients.push(newClient); save(); await sendToGroup(newClient, 'new');
     for(let f of fileDataArray) await sendFileToGroup(f, newClient.number, newClient.name);
-    nextNumber++;
-    save();
-    
-    closeQuickForm();
-    showToast(`✅ Клиент #${formatNumber(newClient.number)} добавлен!`);
-    
-    document.getElementById('quickName').value = '';
-    document.getElementById('quickPhone').value = '';
-    document.getElementById('quickArea').value = '';
-    document.getElementById('quickAddress').value = '';
-    document.getElementById('quickComment').value = '';
-    document.getElementById('quickFiles').value = '';
-    updateQuickNumber();
-    
-    showList();
+    nextNumber++; save();
+    closeQuickForm(); showToast(`✅ Клиент #${formatNumber(newClient.number)} добавлен!`);
+    document.getElementById('quickName').value = ''; document.getElementById('quickPhone').value = ''; document.getElementById('quickArea').value = ''; document.getElementById('quickAddress').value = ''; document.getElementById('quickComment').value = ''; document.getElementById('quickFiles').value = ''; updateQuickNumber();
+    showTableView();
 }
 
-function setFilter(s) { 
-    currentFilter = s; 
-    document.querySelectorAll('.filter-btn').forEach((btn,i)=>btn.classList.toggle('active', btn.innerText === s || (s==='all' && btn.innerText==='Все'))); 
-    showList(); 
-}
-
-function showList() {
-    let filtered = getFilteredClients();
-    if(!filtered.length) { 
-        document.getElementById('content').innerHTML = '<div class="card empty-state">📭 Нет клиентов</div>'; 
-        return; 
-    }
-    let html = '';
-    for(let c of filtered) {
-        let cls = c.status === 'Новый' ? 'status-new' : (c.status === 'В работе' ? 'status-work' : (c.status === 'Договор' ? 'status-deal' : 'status-closed'));
-        let managerDisplay = MANAGERS[c.authorId] ? MANAGERS[c.authorId].shortName : (c.authorName || c.authorId);
-        html += `<div class="client-card" onclick="viewClient(${c.number})">
-            <div class="client-number">#${formatNumber(c.number)}</div>
-            <div class="client-name">${c.name}</div>
-            <div class="client-info">📞 ${c.phone} | 📐 ${c.area} м²</div>
-            <div><span class="status-badge ${cls}">${c.status}</span></div>
-            ${!currentUser.isAdmin ? `<div class="author-info">👤 Менеджер: ${managerDisplay}</div>` : `<div class="author-info">👤 Менеджер: ${managerDisplay}</div>`}
-        </div>`;
-    }
-    document.getElementById('content').innerHTML = html;
-}
-
-async function changeClientStatus(number, newStatus) {
-    let c = clients.find(x => x.number === number);
-    if(!c) return;
-    let oldStatus = c.status;
-    if(oldStatus === newStatus) return;
-    
-    // Проверка прав
-    if(!currentUser.isAdmin && String(c.authorId) !== String(currentUser.id)) {
-        showToast(`❌ Вы можете менять статус только у своих клиентов!`);
-        viewClient(number);
-        return;
-    }
-    
-    // Если договор подписан — только на Закрыт
-    if(oldStatus === 'Договор' && c.dealSigned && newStatus !== 'Закрыт') {
-        showToast(`❌ Договор подписан! Можно изменить только на "Закрыт"`);
-        viewClient(number);
-        return;
-    }
-    
-    c.status = newStatus;
-    save();
-    await sendToGroup(c, 'status');
-    showToast(`✅ Статус клиента #${c.number} изменён с "${oldStatus}" на "${newStatus}"`);
-    
-    // Если статус стал Договор — показываем карточку заново с формой подписания
-    if(newStatus === 'Договор') {
-        viewClient(number);
-    } else {
-        showList();
-    }
-}
-
-function viewClient(n) {
-    let c = clients.find(x=>x.number===n);
-    if(!c) { showList(); return; }
-    
-    // Проверка прав
-    if(!currentUser.isAdmin && String(c.authorId) !== String(currentUser.id)) {
-        showToast(`❌ Это не ваш клиент!`);
-        showList();
-        return;
-    }
-    
-    let cls = c.status === 'Новый' ? 'status-new' : (c.status === 'В работе' ? 'status-work' : (c.status === 'Договор' ? 'status-deal' : 'status-closed'));
-    
-    // Статусы для выбора
-    let statusOptions = '';
-    if(c.status === 'Договор' && c.dealSigned) {
-        statusOptions = `<select id="statusSelect">
-            <option ${c.status==='Договор' ? 'selected' : ''}>Договор</option>
-            <option ${c.status==='Закрыт' ? 'selected' : ''}>Закрыт</option>
-        </select>`;
-    } else {
-        statusOptions = `<select id="statusSelect">
-            <option ${c.status==='Новый' ? 'selected' : ''}>Новый</option>
-            <option ${c.status==='В работе' ? 'selected' : ''}>В работе</option>
-            <option ${c.status==='Договор' ? 'selected' : ''}>Договор</option>
-            <option ${c.status==='Закрыт' ? 'selected' : ''}>Закрыт</option>
-        </select>`;
-    }
-    
-    // Форма подписания договора (только если статус Договор и не подписан)
-    let dealSection = '';
-    if(c.status === 'Договор' && !c.dealSigned) {
-        dealSection = `<div class="deal-section" id="dealSignSection">
-            <div class="input-group"><label>💰 Сумма договора (сум)</label><input id="dealPrice" type="number" placeholder="Введите сумму"></div>
-            <div class="input-group"><label>📄 Файл договора (PDF, DOC, DOCX)</label><input type="file" id="dealFile" accept=".pdf,.doc,.docx"></div>
-            <button class="save-btn" onclick="signDeal(${c.number})">✅ Подписать договор</button>
-        </div>`;
-    } else if(c.status === 'Договор' && c.dealSigned) {
-        dealSection = `<div class="deal-section" style="border-color:#66ff88;">
-            <label style="color:#66ff88;">✅ ДОГОВОР ПОДПИСАН</label>
-            ${currentUser.isAdmin ? `<p style="color:#ffd700;">💰 Сумма: ${formatPrice(c.priceSum)}</p>` : '<p style="color:#888;">💰 Сумма: скрыта</p>'}
-        </div>`;
-    }
-    
-    let managerDisplay = MANAGERS[c.authorId] ? MANAGERS[c.authorId].shortName : (c.authorName || c.authorId);
-    
-    document.getElementById('content').innerHTML = `<div class="card">
-        <div class="number-badge">Клиент #${formatNumber(c.number)}</div>
-        <h3>${c.name}</h3>
-        <p>📞 ${c.phone}</p><p>📐 ${c.area} м²</p><p>📍 ${c.address}</p>
-        <p><span class="status-badge ${cls}" style="font-size:16px;padding:8px 16px;">${c.status}</span></p>
-        ${currentUser.isAdmin && c.priceSum !== '—' ? `<p>💰 ${formatPrice(c.priceSum)}</p>` : ''}
-        <p>💬 ${c.comment}</p><p>🕐 ${c.time}</p>
-        <div class="author-info">👤 Менеджер: ${managerDisplay}</div>
-        ${dealSection}
-        <div class="input-group"><label>📌 Изменить статус</label>${statusOptions}</div>
-        <button class="save-btn" onclick="changeClientStatus(${c.number}, document.getElementById('statusSelect').value)">🔄 Изменить статус</button>
-        <button class="save-btn" style="background:#2a2a2a;margin-top:10px;" onclick="showList()">◀️ Назад</button>
-    </div>`;
-}
+function setFilter(s) { currentFilter = s; document.querySelectorAll('.filter-btn').forEach((btn,i)=>btn.classList.toggle('active', btn.innerText === s || (s==='all' && btn.innerText==='Все'))); showTableView(); }
 
 async function signDeal(n) {
     let c = clients.find(x=>x.number===n);
     let price = document.getElementById('dealPrice').value;
     let file = document.getElementById('dealFile').files[0];
-    
-    if(!price && !file) { 
-        alert('Введите сумму или прикрепите файл договора'); 
-        return; 
-    }
+    if(!price && !file) { alert('Введите сумму или прикрепите файл договора'); return; }
     if(price) c.priceSum = price;
     if(file) {
         let reader = new FileReader();
@@ -475,41 +428,14 @@ function showStats() {
     let visibleClients = getFilteredClients();
     let total = visibleClients.length, areaTotal = 0, totalProfit = 0;
     let newC=0, workC=0, dealC=0, closedC=0;
-    
-    visibleClients.forEach(c => {
-        areaTotal += parseFloat(c.area) || 0;
-        if(c.status === 'Новый') newC++;
-        else if(c.status === 'В работе') workC++;
-        else if(c.status === 'Договор') dealC++;
-        else if(c.status === 'Закрыт') { 
-            closedC++; 
-            if(c.priceSum !== '—') totalProfit += parseFloat(c.priceSum) || 0; 
-        }
-    });
-    
+    visibleClients.forEach(c => { areaTotal += parseFloat(c.area) || 0; if(c.status === 'Новый') newC++; else if(c.status === 'В работе') workC++; else if(c.status === 'Договор') dealC++; else if(c.status === 'Закрыт') { closedC++; if(c.priceSum !== '—') totalProfit += parseFloat(c.priceSum) || 0; } });
     let roleText = currentUser.isAdmin ? 'АДМИН' : 'МЕНЕДЖЕР';
-    
-    let profitHtml = '';
-    if(currentUser.isAdmin) {
-        profitHtml = `<div class="profit-total"><label>💰 ОБЩАЯ ПРИБЫЛЬ</label><div style="font-size:28px;font-weight:bold;color:#66ff88;">${formatPrice(totalProfit)}</div></div>`;
-    } else {
-        profitHtml = `<div class="profit-total"><label>💰 ПРИБЫЛЬ</label><div style="font-size:28px;font-weight:bold;color:#888;">Доступно только админу</div></div>`;
-    }
-    
-    document.getElementById('content').innerHTML = `<div class="card">
-        <h3 style="text-align:center;color:#ffd700;">📊 СТАТИСТИКА (${roleText})</h3>
-        ${profitHtml}
-        <p>👥 Всего: <b style="color:#ffd700;">${total}</b> | 📐 Площадь: <b>${areaTotal} м²</b></p>
-        <hr>
-        <div><span>🟢 Новые: ${newC}</span> | <span>🟡 В работе: ${workC}</span> | <span>🔵 Договор: ${dealC}</span> | <span>✅ Закрыты: ${closedC}</span></div>
-        <button class="save-btn" style="background:#2a2a2a;color:white;margin-top:20px;" onclick="showList()">◀️ Назад</button>
-    </div>`;
+    let profitHtml = currentUser.isAdmin ? `<div class="profit-total"><label>💰 ОБЩАЯ ПРИБЫЛЬ</label><div style="font-size:28px;font-weight:bold;">${formatPrice(totalProfit)}</div></div>` : `<div class="profit-total"><label>💰 ПРИБЫЛЬ</label><div style="font-size:28px;font-weight:bold;color:var(--text-muted);">Доступно только админу</div></div>`;
+    document.getElementById('content').innerHTML = `<div class="card"><h3 style="text-align:center;color:var(--accent-color);">📊 СТАТИСТИКА (${roleText})</h3>${profitHtml}<p>👥 Всего: <b style="color:var(--accent-color);">${total}</b> | 📐 Площадь: <b>${areaTotal} м²</b></p><hr><div><span>🟢 Новые: ${newC}</span> | <span>🟡 В работе: ${workC}</span> | <span>🔵 Договор: ${dealC}</span> | <span>✅ Закрыты: ${closedC}</span></div><button class="save-btn" style="background:var(--bg-input);color:var(--text-primary);margin-top:20px;" onclick="showTableView()">◀️ Назад</button></div>`;
 }
 
-// ЗАПУСК
-initUser();
-load();
-showList();
+initTheme(); load(); checkSavedLogin();
+function checkSavedLogin() { let savedId = localStorage.getItem('currentUserId'); if(savedId && MANAGERS[savedId]) selectManager(savedId); else { document.getElementById('loginScreen').style.display = 'flex'; document.getElementById('appContent').style.display = 'none'; } }
 </script>
 </body>
 </html>
