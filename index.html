@@ -60,7 +60,7 @@
         .deal-section { border-top: 1px solid #333; margin-top: 15px; padding-top: 15px; }
         .profit-total { background: #1a3a1a; border-radius: 16px; padding: 12px; text-align: center; margin-top: 10px; }
         .manager-select { background: #1a1a1a; border-radius: 16px; padding: 16px; margin-bottom: 15px; border: 1px solid #333; }
-        .manager-select label { color: #ffd700; display: block; margin-bottom: 10px; font-size: 14px; font-weight: bold; }
+        .debug-info { background: #1a1a1a; border-radius: 12px; padding: 8px; margin-bottom: 10px; font-size: 10px; color: #888; }
     </style>
 </head>
 <body>
@@ -86,6 +86,7 @@
     <div class="menu-buttons">
         <button class="menu-btn" onclick="showList()">Список</button>
         <button class="menu-btn" onclick="showStats()">Статистика</button>
+        <button class="menu-btn" onclick="clearAllData()" style="background:#4a1a1a; color:#ff8888;">Очистить всё</button>
     </div>
     <div id="content"></div>
 </div>
@@ -101,7 +102,7 @@
         <div id="managerSelectDiv" class="manager-select" style="display:none;">
             <label>👥 Назначить менеджера:</label>
             <select id="managerSelect">
-                <option value="954221831">👑 Админ (Ты)</option>
+                <option value="954221831">👑 Админ</option>
                 <option value="sultan">👤 Султан</option>
                 <option value="abdulloh">👤 Абдуллох</option>
                 <option value="shahzod">👤 Шахзод</option>
@@ -149,21 +150,26 @@ let clients = [], nextNumber = 1, currentFilter = 'all';
 
 // ========== ПОЛУЧАЕМ ДАННЫЕ ИЗ TELEGRAM ==========
 function initUser() {
+    // Пытаемся получить данные из Telegram WebApp
     if(window.Telegram && Telegram.WebApp) {
         let initData = Telegram.WebApp.initDataUnsafe;
         if(initData && initData.user) {
             currentUser.id = initData.user.id;
             currentUser.name = initData.user.first_name || (initData.user.username ? '@'+initData.user.username : 'Пользователь');
-            currentUser.isAdmin = (currentUser.id === ADMIN_ID);
+            currentUser.isAdmin = (currentUser.id == ADMIN_ID); // Используем == вместо ===
+            console.log('Telegram user:', currentUser);
         } else {
-            currentUser.id = 'unknown_' + Date.now();
+            // Если нет user, пробуем получить из строки
+            currentUser.id = 'unknown';
             currentUser.name = 'Гость';
             currentUser.isAdmin = false;
         }
     } else {
-        currentUser.id = 'test_' + Date.now();
-        currentUser.name = 'Тестовый';
-        currentUser.isAdmin = false;
+        // Вне Telegram (браузер) - для теста используем ID админа
+        currentUser.id = ADMIN_ID;
+        currentUser.name = 'Админ (Тест)';
+        currentUser.isAdmin = true;
+        console.log('Браузер режим: Админ');
     }
     
     let roleText = currentUser.isAdmin ? '👑 АДМИН' : (MANAGERS[currentUser.id] ? MANAGERS[currentUser.id].shortName : '👤 МЕНЕДЖЕР');
@@ -171,7 +177,8 @@ function initUser() {
     
     // Показываем выбор менеджера только для админа
     if(currentUser.isAdmin) {
-        document.getElementById('managerSelectDiv').style.display = 'block';
+        let div = document.getElementById('managerSelectDiv');
+        if(div) div.style.display = 'block';
     }
 }
 
@@ -182,7 +189,7 @@ function getFilteredClients() {
         filtered = filtered.filter(c => c.status === currentFilter);
     }
     if(!currentUser.isAdmin) {
-        filtered = filtered.filter(c => c.authorId === currentUser.id);
+        filtered = filtered.filter(c => c.authorId == currentUser.id);
     }
     return filtered;
 }
@@ -199,15 +206,30 @@ function load() {
     if(s) clients = JSON.parse(s); 
     let n = localStorage.getItem('nextNumber'); 
     if(n) nextNumber = parseInt(n); 
+    console.log('Загружено клиентов:', clients.length);
 }
-function save() { localStorage.setItem('clients', JSON.stringify(clients)); localStorage.setItem('nextNumber', nextNumber); }
+function save() { 
+    localStorage.setItem('clients', JSON.stringify(clients)); 
+    localStorage.setItem('nextNumber', nextNumber);
+    console.log('Сохранено клиентов:', clients.length);
+}
+
+function clearAllData() {
+    if(confirm('⚠️ Очистить ВСЕХ клиентов? Это действие нельзя отменить!')) {
+        clients = [];
+        nextNumber = 1;
+        save();
+        showList();
+        showToast('✅ Все данные очищены!');
+    }
+}
 
 const CHAT_ID = -1003831665624;
 const BOT_TOKEN = "8628159718:AAH8tPnTX0fReDzpByMG44A-iF6HG-Pm5-8";
 
 async function sendToGroup(c, eventType = 'new') {
     let title = eventType === 'new' ? `🆕 НОВЫЙ КЛИЕНТ #${c.number}` : (eventType === 'status' ? `🔄 ИЗМЕНЕНИЕ СТАТУСА` : `✅ ПОДПИСАН ДОГОВОР #${c.number}`);
-    let managerName = c.authorName || 'Неизвестный';
+    let managerName = MANAGERS[c.authorId] ? MANAGERS[c.authorId].name : (c.authorName || 'Неизвестный');
     let message = `${title}\n\n📛 Имя: ${c.name}\n📞 Телефон: ${c.phone}\n📐 Площадь: ${c.area} м²\n📍 Адрес: ${c.address}\n📌 Статус: ${c.status}`;
     if(c.priceSum && c.priceSum !== '—') message += `\n💰 Сумма: ${formatPrice(c.priceSum)}`;
     message += `\n💬 Комментарий: ${c.comment}\n\n👤 Менеджер: ${managerName}\n🕐 ${new Date().toLocaleString()}`;
@@ -255,7 +277,7 @@ async function quickAdd() {
     
     // Определяем кто добавляет
     let authorId, authorName;
-    if(currentUser.isAdmin && document.getElementById('managerSelect').value) {
+    if(currentUser.isAdmin && document.getElementById('managerSelect') && document.getElementById('managerSelect').value) {
         authorId = document.getElementById('managerSelect').value;
         authorName = MANAGERS[authorId] ? MANAGERS[authorId].name : authorId;
     } else {
@@ -316,12 +338,13 @@ function showList() {
     let html = '';
     for(let c of filtered) {
         let cls = c.status === 'Новый' ? 'status-new' : (c.status === 'В работе' ? 'status-work' : (c.status === 'Договор' ? 'status-deal' : 'status-closed'));
+        let managerDisplay = MANAGERS[c.authorId] ? MANAGERS[c.authorId].shortName : (c.authorName || c.authorId);
         html += `<div class="client-card" onclick="viewClient(${c.number})">
             <div class="client-number">#${formatNumber(c.number)}</div>
             <div class="client-name">${c.name}</div>
             <div class="client-info">📞 ${c.phone} | 📐 ${c.area} м²</div>
             <div><span class="status-badge ${cls}">${c.status}</span></div>
-            <div class="author-info">👤 Менеджер: ${MANAGERS[c.authorId] ? MANAGERS[c.authorId].shortName : c.authorName}</div>
+            <div class="author-info">👤 Менеджер: ${managerDisplay}</div>
         </div>`;
     }
     document.getElementById('content').innerHTML = html;
@@ -333,7 +356,7 @@ async function changeClientStatus(number, newStatus) {
     let oldStatus = c.status;
     if(oldStatus === newStatus) return;
     
-    if(!currentUser.isAdmin && c.authorId !== currentUser.id) {
+    if(!currentUser.isAdmin && c.authorId != currentUser.id) {
         showToast(`❌ Вы можете менять статус только у своих клиентов!`);
         viewClient(number);
         return;
@@ -356,7 +379,7 @@ function viewClient(n) {
     let c = clients.find(x=>x.number===n);
     if(!c) { showList(); return; }
     
-    if(!currentUser.isAdmin && c.authorId !== currentUser.id) {
+    if(!currentUser.isAdmin && c.authorId != currentUser.id) {
         showToast(`❌ Это не ваш клиент!`);
         showList();
         return;
@@ -393,7 +416,7 @@ function viewClient(n) {
         </div>`;
     }
     
-    let managerDisplay = MANAGERS[c.authorId] ? MANAGERS[c.authorId].shortName : c.authorName;
+    let managerDisplay = MANAGERS[c.authorId] ? MANAGERS[c.authorId].shortName : (c.authorName || c.authorId);
     
     document.getElementById('content').innerHTML = `<div class="card">
         <div class="number-badge">Клиент #${formatNumber(c.number)}</div>
@@ -470,6 +493,7 @@ function showStats() {
     </div>`;
 }
 
+// ЗАПУСК
 initUser();
 load();
 showList();
