@@ -36,7 +36,7 @@
         .client-name { font-size: 18px; font-weight: bold; color: #fff; }
         .client-number { background: #ffd700; color: #111; border-radius: 20px; padding: 4px 12px; font-size: 12px; display: inline-block; }
         .client-info { font-size: 14px; color: #ccc; margin-top: 8px; }
-        .author-info { font-size: 11px; color: #888; margin-top: 8px; border-top: 1px solid #333; padding-top: 8px; }
+        .author-info { font-size: 11px; color: #ffd700; margin-top: 8px; border-top: 1px solid #333; padding-top: 8px; }
         
         .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
         .status-new { background: #1a3a5c; color: #66ccff; }
@@ -59,6 +59,8 @@
         p, h3 { color: #fff; }
         .deal-section { border-top: 1px solid #333; margin-top: 15px; padding-top: 15px; }
         .profit-total { background: #1a3a1a; border-radius: 16px; padding: 12px; text-align: center; margin-top: 10px; }
+        .manager-select { background: #1a1a1a; border-radius: 16px; padding: 16px; margin-bottom: 15px; border: 1px solid #333; }
+        .manager-select label { color: #ffd700; display: block; margin-bottom: 10px; font-size: 14px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -92,20 +94,32 @@
 
 <div id="quickModal" class="modal">
     <div class="modal-content">
-        <div class="modal-header"><h3>Быстрое добавление</h3><button class="close-modal" onclick="closeQuickForm()">✕</button></div>
+        <div class="modal-header"><h3>➕ Новый клиент</h3><button class="close-modal" onclick="closeQuickForm()">✕</button></div>
         <div class="number-badge" id="quickNumber">Новый клиент → #1</div>
-        <div class="input-group"><label>Имя *</label><input id="quickName" placeholder="Ислом Каримов" autofocus></div>
-        <div class="quick-form-row"><div class="input-group"><label>Телефон</label><input id="quickPhone" placeholder="+998 90 123 45 67"></div><div class="input-group"><label>Площадь</label><input id="quickArea" placeholder="75" type="number"></div></div>
-        <div class="input-group"><label>Адрес</label><input id="quickAddress" placeholder="ул. Навои, 15"></div>
-        <div class="input-group"><label>Статус</label>
+        
+        <!-- ВЫБОР МЕНЕДЖЕРА (только для админа) -->
+        <div id="managerSelectDiv" class="manager-select" style="display:none;">
+            <label>👥 Назначить менеджера:</label>
+            <select id="managerSelect">
+                <option value="954221831">👑 Админ (Ты)</option>
+                <option value="sultan">👤 Султан</option>
+                <option value="abdulloh">👤 Абдуллох</option>
+                <option value="shahzod">👤 Шахзод</option>
+            </select>
+        </div>
+        
+        <div class="input-group"><label>📛 Имя *</label><input id="quickName" placeholder="Ислом Каримов" autofocus></div>
+        <div class="quick-form-row"><div class="input-group"><label>📞 Телефон</label><input id="quickPhone" placeholder="+998 90 123 45 67"></div><div class="input-group"><label>📐 Площадь</label><input id="quickArea" placeholder="75" type="number"></div></div>
+        <div class="input-group"><label>📍 Адрес</label><input id="quickAddress" placeholder="ул. Навои, 15"></div>
+        <div class="input-group"><label>📌 Статус</label>
             <select id="quickStatus">
                 <option value="Новый">Новый</option>
                 <option value="В работе">В работе</option>
             </select>
         </div>
-        <div class="input-group"><label>Комментарий</label><textarea id="quickComment" rows="2" placeholder="Дополнительная информация..."></textarea></div>
-        <div class="input-group"><label>Файлы</label><input type="file" id="quickFiles" multiple accept=".pdf,.doc,.docx,.jpg,.png,.mp3,.m4a,.ogg,.wav"></div>
-        <button class="save-btn" onclick="quickAdd()">Добавить клиента</button>
+        <div class="input-group"><label>💬 Комментарий</label><textarea id="quickComment" rows="2" placeholder="Дополнительная информация..."></textarea></div>
+        <div class="input-group"><label>📎 Файлы</label><input type="file" id="quickFiles" multiple accept=".pdf,.doc,.docx,.jpg,.png,.mp3,.m4a,.ogg,.wav"></div>
+        <button class="save-btn" onclick="quickAdd()">✅ Добавить клиента</button>
     </div>
 </div>
 
@@ -114,6 +128,14 @@
 <script>
 // ========== АДМИН (твой ID) ==========
 const ADMIN_ID = 954221831;
+
+// ========== СПИСОК МЕНЕДЖЕРОВ ==========
+const MANAGERS = {
+    '954221831': { name: 'Админ', shortName: '👑 Админ', isAdmin: true },
+    'sultan': { name: 'Султан', shortName: '👤 Султан', isAdmin: false },
+    'abdulloh': { name: 'Абдуллох', shortName: '👤 Абдуллох', isAdmin: false },
+    'shahzod': { name: 'Шахзод', shortName: '👤 Шахзод', isAdmin: false }
+};
 
 // ========== ТЕКУЩИЙ ПОЛЬЗОВАТЕЛЬ ==========
 let currentUser = {
@@ -139,34 +161,32 @@ function initUser() {
             currentUser.isAdmin = false;
         }
     } else {
-        // Для теста в браузере
         currentUser.id = 'test_' + Date.now();
         currentUser.name = 'Тестовый';
         currentUser.isAdmin = false;
     }
     
-    let roleText = currentUser.isAdmin ? '👑 АДМИН' : '👤 МЕНЕДЖЕР';
+    let roleText = currentUser.isAdmin ? '👑 АДМИН' : (MANAGERS[currentUser.id] ? MANAGERS[currentUser.id].shortName : '👤 МЕНЕДЖЕР');
     document.getElementById('userInfo').innerHTML = `${currentUser.name} ${roleText}`;
+    
+    // Показываем выбор менеджера только для админа
+    if(currentUser.isAdmin) {
+        document.getElementById('managerSelectDiv').style.display = 'block';
+    }
 }
 
-// ========== ФИЛЬТРАЦИЯ КЛИЕНТОВ (админ видит всех, менеджер только своих) ==========
+// ========== ФИЛЬТРАЦИЯ КЛИЕНТОВ ==========
 function getFilteredClients() {
     let filtered = clients;
-    
-    // Фильтр по статусу
     if(currentFilter !== 'all') {
         filtered = filtered.filter(c => c.status === currentFilter);
     }
-    
-    // Фильтр по автору (менеджер видит только своих)
     if(!currentUser.isAdmin) {
         filtered = filtered.filter(c => c.authorId === currentUser.id);
     }
-    
     return filtered;
 }
 
-// ========== ФУНКЦИИ ==========
 function formatNumber(num) { return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " "); }
 function formatPrice(priceSum) {
     if(!priceSum || priceSum === '—') return '—';
@@ -186,7 +206,7 @@ const CHAT_ID = -1003831665624;
 const BOT_TOKEN = "8628159718:AAH8tPnTX0fReDzpByMG44A-iF6HG-Pm5-8";
 
 async function sendToGroup(c, eventType = 'new') {
-    let title = eventType === 'new' ? `🆕 НОВЫЙ КЛИЕНТ #${c.number}` : `🔄 ИЗМЕНЕНИЕ СТАТУСА`;
+    let title = eventType === 'new' ? `🆕 НОВЫЙ КЛИЕНТ #${c.number}` : (eventType === 'status' ? `🔄 ИЗМЕНЕНИЕ СТАТУСА` : `✅ ПОДПИСАН ДОГОВОР #${c.number}`);
     let managerName = c.authorName || 'Неизвестный';
     let message = `${title}\n\n📛 Имя: ${c.name}\n📞 Телефон: ${c.phone}\n📐 Площадь: ${c.area} м²\n📍 Адрес: ${c.address}\n📌 Статус: ${c.status}`;
     if(c.priceSum && c.priceSum !== '—') message += `\n💰 Сумма: ${formatPrice(c.priceSum)}`;
@@ -233,6 +253,16 @@ async function quickAdd() {
         fileDataArray.push({name: f.name, type: f.type, data: data});
     }
     
+    // Определяем кто добавляет
+    let authorId, authorName;
+    if(currentUser.isAdmin && document.getElementById('managerSelect').value) {
+        authorId = document.getElementById('managerSelect').value;
+        authorName = MANAGERS[authorId] ? MANAGERS[authorId].name : authorId;
+    } else {
+        authorId = currentUser.id;
+        authorName = currentUser.name;
+    }
+    
     let newClient = {
         number: nextNumber,
         name: name,
@@ -246,8 +276,8 @@ async function quickAdd() {
         files: fileDataArray,
         dealFiles: [],
         dealSigned: false,
-        authorId: currentUser.id,
-        authorName: currentUser.name
+        authorId: authorId,
+        authorName: authorName
     };
     
     clients.push(newClient);
@@ -258,7 +288,7 @@ async function quickAdd() {
     save();
     
     closeQuickForm();
-    showToast(`✅ Клиент #${formatNumber(newClient.number)} добавлен!`);
+    showToast(`✅ Клиент #${formatNumber(newClient.number)} добавлен!\nМенеджер: ${authorName}`);
     
     document.getElementById('quickName').value = '';
     document.getElementById('quickPhone').value = '';
@@ -291,8 +321,7 @@ function showList() {
             <div class="client-name">${c.name}</div>
             <div class="client-info">📞 ${c.phone} | 📐 ${c.area} м²</div>
             <div><span class="status-badge ${cls}">${c.status}</span></div>
-            ${c.status === 'Договор' && c.priceSum !== '—' ? `<div class="price-badge">💰 ${formatPrice(c.priceSum)}</div>` : ''}
-            ${!currentUser.isAdmin ? `<div class="author-info">👤 Добавил: ${c.authorName || '—'}</div>` : ''}
+            <div class="author-info">👤 Менеджер: ${MANAGERS[c.authorId] ? MANAGERS[c.authorId].shortName : c.authorName}</div>
         </div>`;
     }
     document.getElementById('content').innerHTML = html;
@@ -304,7 +333,6 @@ async function changeClientStatus(number, newStatus) {
     let oldStatus = c.status;
     if(oldStatus === newStatus) return;
     
-    // Менеджер может менять только своих клиентов
     if(!currentUser.isAdmin && c.authorId !== currentUser.id) {
         showToast(`❌ Вы можете менять статус только у своих клиентов!`);
         viewClient(number);
@@ -328,7 +356,6 @@ function viewClient(n) {
     let c = clients.find(x=>x.number===n);
     if(!c) { showList(); return; }
     
-    // Менеджер не может смотреть чужих клиентов
     if(!currentUser.isAdmin && c.authorId !== currentUser.id) {
         showToast(`❌ Это не ваш клиент!`);
         showList();
@@ -360,17 +387,22 @@ function viewClient(n) {
             <button class="save-btn" onclick="signDeal(${c.number})">✅ Подписать договор</button>
         </div>`;
     } else if(c.status === 'Договор' && c.dealSigned) {
-        dealSection = `<div class="deal-section" style="border-color:#66ff88;"><label style="color:#66ff88;">✅ ДОГОВОР ПОДПИСАН</label><p style="color:#ffd700;">💰 Сумма: ${formatPrice(c.priceSum)}</p></div>`;
+        dealSection = `<div class="deal-section" style="border-color:#66ff88;">
+            <label style="color:#66ff88;">✅ ДОГОВОР ПОДПИСАН</label>
+            ${currentUser.isAdmin ? `<p style="color:#ffd700;">💰 Сумма: ${formatPrice(c.priceSum)}</p>` : '<p style="color:#888;">💰 Сумма: скрыта</p>'}
+        </div>`;
     }
+    
+    let managerDisplay = MANAGERS[c.authorId] ? MANAGERS[c.authorId].shortName : c.authorName;
     
     document.getElementById('content').innerHTML = `<div class="card">
         <div class="number-badge">Клиент #${formatNumber(c.number)}</div>
         <h3>${c.name}</h3>
         <p>📞 ${c.phone}</p><p>📐 ${c.area} м²</p><p>📍 ${c.address}</p>
         <p><span class="status-badge ${cls}" style="font-size:16px;padding:8px 16px;">${c.status}</span></p>
-        ${c.priceSum !== '—' ? `<p>💰 ${formatPrice(c.priceSum)}</p>` : ''}
+        ${currentUser.isAdmin && c.priceSum !== '—' ? `<p>💰 ${formatPrice(c.priceSum)}</p>` : ''}
         <p>💬 ${c.comment}</p><p>🕐 ${c.time}</p>
-        <div class="author-info">👤 Добавил: ${c.authorName || '—'} ${c.authorId === ADMIN_ID ? '(Админ)' : ''}</div>
+        <div class="author-info">👤 Менеджер: ${managerDisplay}</div>
         ${dealSection}
         <div class="input-group"><label>📌 Изменить статус</label>${statusOptions}</div>
         <button class="save-btn" onclick="changeClientStatus(${c.number}, document.getElementById('statusSelect').value)">🔄 Изменить статус</button>
@@ -383,7 +415,10 @@ async function signDeal(n) {
     let price = document.getElementById('dealPrice').value;
     let file = document.getElementById('dealFile').files[0];
     
-    if(!price && !file) { alert('Введите сумму или прикрепите файл договора'); return; }
+    if(!price && !file) { 
+        alert('Введите сумму или прикрепите файл договора'); 
+        return; 
+    }
     if(price) c.priceSum = price;
     if(file) {
         let reader = new FileReader();
@@ -410,15 +445,24 @@ function showStats() {
         if(c.status === 'Новый') newC++;
         else if(c.status === 'В работе') workC++;
         else if(c.status === 'Договор') dealC++;
-        else if(c.status === 'Закрыт') { closedC++; if(c.priceSum !== '—') totalProfit += parseFloat(c.priceSum) || 0; }
+        else if(c.status === 'Закрыт') { 
+            closedC++; 
+            if(c.priceSum !== '—') totalProfit += parseFloat(c.priceSum) || 0; 
+        }
     });
     
-    let maxCount = Math.max(newC, workC, dealC, closedC, 1);
     let roleText = currentUser.isAdmin ? 'АДМИН' : 'МЕНЕДЖЕР';
+    
+    let profitHtml = '';
+    if(currentUser.isAdmin) {
+        profitHtml = `<div class="profit-total"><label>💰 ОБЩАЯ ПРИБЫЛЬ</label><div style="font-size:28px;font-weight:bold;color:#66ff88;">${formatPrice(totalProfit)}</div></div>`;
+    } else {
+        profitHtml = `<div class="profit-total"><label>💰 ПРИБЫЛЬ</label><div style="font-size:28px;font-weight:bold;color:#888;">Доступно только админу</div></div>`;
+    }
     
     document.getElementById('content').innerHTML = `<div class="card">
         <h3 style="text-align:center;color:#ffd700;">📊 СТАТИСТИКА (${roleText})</h3>
-        <div class="profit-total"><label>💰 ОБЩАЯ ПРИБЫЛЬ</label><div style="font-size:28px;font-weight:bold;color:#66ff88;">${formatPrice(totalProfit)}</div></div>
+        ${profitHtml}
         <p>👥 Всего: <b style="color:#ffd700;">${total}</b> | 📐 Площадь: <b>${areaTotal} м²</b></p>
         <hr>
         <div><span>🟢 Новые: ${newC}</span> | <span>🟡 В работе: ${workC}</span> | <span>🔵 Договор: ${dealC}</span> | <span>✅ Закрыты: ${closedC}</span></div>
@@ -426,7 +470,6 @@ function showStats() {
     </div>`;
 }
 
-// ========== ЗАПУСК ==========
 initUser();
 load();
 showList();
