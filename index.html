@@ -8,8 +8,10 @@
         body { font-family: Arial; background: #f0f0f0; padding: 20px; text-align: center; }
         button { background: blue; color: white; padding: 15px; margin: 10px; border: none; border-radius: 10px; cursor: pointer; width: 90%; font-size: 18px; }
         .card { background: white; padding: 15px; border-radius: 15px; margin-bottom: 10px; text-align: left; }
-        input, select { width: 95%; padding: 10px; margin: 5px 0; font-size: 16px; }
+        input, select, textarea { width: 95%; padding: 10px; margin: 5px 0; font-size: 16px; border-radius: 8px; border: 1px solid #ccc; }
+        textarea { resize: vertical; font-family: Arial; }
         .number { background: #667eea; color: white; border-radius: 20px; padding: 5px 12px; display: inline-block; margin-bottom: 10px; }
+        .label { font-weight: bold; margin-top: 10px; display: block; }
     </style>
 </head>
 <body>
@@ -41,7 +43,10 @@
             let message = `🆕 *НОВЫЙ КЛИЕНТ #${client.number}*%0A%0A` +
                           `📛 *Имя:* ${client.name}%0A` +
                           `📞 *Телефон:* ${client.phone}%0A` +
+                          `📐 *Площадь:* ${client.area} м²%0A` +
+                          `📍 *Адрес:* ${client.address}%0A` +
                           `📌 *Статус:* ${client.status}%0A` +
+                          `💬 *Комментарий:* ${client.comment}%0A%0A` +
                           `🕐 *Добавлен:* ${client.time}`;
             
             const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${message}&parse_mode=Markdown`;
@@ -64,34 +69,53 @@
                 <div class="card">
                     <h3>➕ Новый клиент</h3>
                     <p class="number">Будет номер: #${nextNumber}</p>
-                    <input id="name" placeholder="Имя клиента">
-                    <input id="phone" placeholder="Телефон">
+                    
+                    <label class="label">📛 Имя клиента *</label>
+                    <input id="name" placeholder="Иван Петров">
+                    
+                    <label class="label">📞 Телефон</label>
+                    <input id="phone" placeholder="+7 999 123-45-67">
+                    
+                    <label class="label">📐 Площадь (м²)</label>
+                    <input id="area" placeholder="75" type="number">
+                    
+                    <label class="label">📍 Адрес объекта</label>
+                    <input id="address" placeholder="ул. Ленина, д. 10">
+                    
+                    <label class="label">📌 Статус</label>
                     <select id="status">
                         <option>Новый</option>
                         <option>В работе</option>
                         <option>Договор</option>
                         <option>Закрыт</option>
                     </select>
-                    <button onclick="add()">Сохранить и отправить в группу</button>
+                    
+                    <label class="label">💬 Комментарий</label>
+                    <textarea id="comment" rows="3" placeholder="Дополнительная информация по клиенту..."></textarea>
+                    
+                    <button onclick="add()">✅ Сохранить и отправить</button>
                 </div>
             `;
         }
         
         function add() {
             let name = document.getElementById('name').value;
-            if(!name) { alert('Введите имя'); return; }
+            if(!name) { alert('Введите имя клиента'); return; }
             
             let newClient = {
                 number: nextNumber,
                 name: name,
                 phone: document.getElementById('phone').value || '—',
+                area: document.getElementById('area').value || '—',
+                address: document.getElementById('address').value || '—',
                 status: document.getElementById('status').value,
+                comment: document.getElementById('comment').value || '—',
                 time: new Date().toLocaleString()
             };
             
             clients.push(newClient);
             save();
-            sendToGroup(newClient);  // Отправляем карточку в группу
+            sendToGroup(newClient);
             nextNumber++;
             showList();
         }
@@ -106,6 +130,8 @@
                 html += '<div class="card">' +
                     '<b>#' + c.number + ' - ' + c.name + '</b><br>' +
                     '📞 ' + c.phone + '<br>' +
+                    '📐 ' + c.area + ' м²<br>' +
+                    '📍 ' + c.address + '<br>' +
                     '📌 ' + c.status + '<br>' +
                     '<button onclick="view(' + c.number + ')">👤 Подробнее</button>' +
                     '</div>';
@@ -118,9 +144,13 @@
             document.getElementById('content').innerHTML = `
                 <div class="card">
                     <h3>#${c.number} - ${c.name}</h3>
-                    <p>📞 ${c.phone}</p>
-                    <p>📌 ${c.status}</p>
-                    <p>🕐 ${c.time}</p>
+                    <p><strong>📞 Телефон:</strong> ${c.phone}</p>
+                    <p><strong>📐 Площадь:</strong> ${c.area} м²</p>
+                    <p><strong>📍 Адрес:</strong> ${c.address}</p>
+                    <p><strong>📌 Статус:</strong> ${c.status}</p>
+                    <p><strong>💬 Комментарий:</strong> ${c.comment}</p>
+                    <p><strong>🕐 Добавлен:</strong> ${c.time}</p>
+                    <hr>
                     <select id="ns">
                         <option>Новый</option>
                         <option>В работе</option>
@@ -142,7 +172,30 @@
         
         function showStats() {
             let total = clients.length;
-            document.getElementById('content').innerHTML = '<div class="card">📊 Всего клиентов: ' + total + '</div>';
+            let areaTotal = 0;
+            let newCount = 0, workCount = 0, dealCount = 0, closedCount = 0;
+            
+            for(let c of clients) {
+                if(c.area !== '—') areaTotal += parseFloat(c.area) || 0;
+                if(c.status === 'Новый') newCount++;
+                else if(c.status === 'В работе') workCount++;
+                else if(c.status === 'Договор') dealCount++;
+                else if(c.status === 'Закрыт') closedCount++;
+            }
+            
+            document.getElementById('content').innerHTML = `
+                <div class="card">
+                    <h3>📊 Статистика</h3>
+                    <p>👥 Всего клиентов: <b>${total}</b></p>
+                    <p>📐 Общая площадь: <b>${areaTotal} м²</b></p>
+                    <hr>
+                    <p>🟢 Новые: ${newCount}</p>
+                    <p>🟡 В работе: ${workCount}</p>
+                    <p>🔵 Договор: ${dealCount}</p>
+                    <p>✅ Закрыты: ${closedCount}</p>
+                    <button onclick="showList()">◀️ Назад</button>
+                </div>
+            `;
         }
         
         load();
