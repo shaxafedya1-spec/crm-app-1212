@@ -43,6 +43,7 @@
         .empty-state { text-align: center; padding: 40px; color: #666; }
         .number-badge { background: #ffd700; color: #111; border-radius: 30px; padding: 8px 16px; display: inline-block; margin-bottom: 20px; font-weight: bold; }
         hr { border-color: #222; margin: 20px 0; }
+        .deal-files { margin-top: 15px; border-top: 1px solid #333; padding-top: 15px; }
     </style>
 </head>
 <body>
@@ -82,7 +83,7 @@ function save() { localStorage.setItem('clients', JSON.stringify(clients)); loca
 
 const CHAT_ID = -1003831665624, BOT_TOKEN = "8628159718:AAH8tPnTX0fReDzpByMG44A-iF6HG-Pm5-8";
 
-async function sendFileToGroup(fileData, client) {
+async function sendFileToGroup(fileData, client, customCaption = '') {
     try {
         let byteCharacters = atob(fileData.data.split(',')[1]);
         let byteNumbers = new Array(byteCharacters.length);
@@ -92,7 +93,8 @@ async function sendFileToGroup(fileData, client) {
         let formData = new FormData();
         formData.append('chat_id', CHAT_ID);
         formData.append('document', blob, fileData.name);
-        formData.append('caption', `📎 Файл к клиенту #${client.number} - ${client.name}`);
+        let caption = customCaption || `📎 ${fileData.name} к клиенту #${client.number} - ${client.name}`;
+        formData.append('caption', caption);
         await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendDocument`, {method: 'POST', body: formData});
     } catch(e) { console.log('Ошибка отправки файла:', e); }
 }
@@ -131,7 +133,7 @@ async function add() {
         let data = await new Promise(resolve => { reader.onload = e => resolve(e.target.result); reader.readAsDataURL(file); });
         fileDataArray.push({name: file.name, type: file.type, data: data});
     }
-    let c = { number: nextNumber, name: name, phone: document.getElementById('phone').value || '—', area: document.getElementById('area').value || '—', address: document.getElementById('address').value || '—', status: document.getElementById('status').value, comment: document.getElementById('comment').value || '—', time: new Date().toLocaleString(), files: fileDataArray };
+    let c = { number: nextNumber, name: name, phone: document.getElementById('phone').value || '—', area: document.getElementById('area').value || '—', address: document.getElementById('address').value || '—', status: document.getElementById('status').value, comment: document.getElementById('comment').value || '—', time: new Date().toLocaleString(), files: fileDataArray, dealFiles: [] };
     clients.push(c); save(); await sendToGroup(c, false, fileDataArray); nextNumber++; showList();
     alert(`✅ Клиент #${c.number} добавлен! Файлы отправлены в группу.`);
 }
@@ -142,7 +144,7 @@ function showList() {
     let html = '';
     for(let c of filtered) {
         let cls = c.status === 'Новый' ? 'status-new' : (c.status === 'В работе' ? 'status-work' : (c.status === 'Договор' ? 'status-deal' : 'status-closed'));
-        let fileCount = c.files ? c.files.length : 0;
+        let fileCount = (c.files ? c.files.length : 0) + (c.dealFiles ? c.dealFiles.length : 0);
         html += `<div class="client-card" onclick="view(${c.number})"><div class="client-number">#${c.number}</div><div class="client-name">${c.name}</div><div class="client-info">📞 ${c.phone} | 📐 ${c.area} м² | 📎 ${fileCount}</div><div><span class="status-badge ${cls}">${c.status}</span></div></div>`;
     }
     document.getElementById('content').innerHTML = html;
@@ -151,14 +153,25 @@ function showList() {
 function view(n) {
     let c = clients.find(x=>x.number===n);
     let cls = c.status === 'Новый' ? 'status-new' : (c.status === 'В работе' ? 'status-work' : (c.status === 'Договор' ? 'status-deal' : 'status-closed'));
+    
     let filesHtml = '';
     if(c.files && c.files.length) {
-        filesHtml = '<div class="file-list"><b>📎 Файлы:</b>';
-        for(let f of c.files) filesHtml += `<div class="file-item"><span class="file-name">📄 ${f.name}</span><button class="delete-file" onclick="event.stopPropagation(); deleteFile(${n}, '${f.name}')">🗑️</button></div>`;
+        filesHtml += '<div class="file-list"><b>📎 Общие файлы:</b>';
+        for(let f of c.files) filesHtml += `<div class="file-item"><span class="file-name">📄 ${f.name}</span><button class="delete-file" onclick="event.stopPropagation(); deleteFile(${n}, '${f.name}', 'files')">🗑️</button></div>`;
         filesHtml += '</div>';
     }
+    
+    let dealFilesHtml = '';
+    if(c.dealFiles && c.dealFiles.length) {
+        dealFilesHtml += '<div class="file-list deal-files"><b>📄 ДОГОВОРЫ:</b>';
+        for(let f of c.dealFiles) dealFilesHtml += `<div class="file-item"><span class="file-name">📑 ${f.name}</span><button class="delete-file" onclick="event.stopPropagation(); deleteFile(${n}, '${f.name}', 'dealFiles')">🗑️</button></div>`;
+        dealFilesHtml += '</div>';
+    }
+    
+    let dealUploadHtml = c.status === 'Договор' ? `<div class="deal-files"><label>📄 Загрузить договор (PDF, DOC)</label><input type="file" id="dealFile" accept=".pdf,.doc,.docx"><button class="upload-btn" onclick="addDealFile(${n})">📤 Загрузить договор</button></div>` : '';
+    
     document.getElementById('content').innerHTML = `<div class="card"><div class="number-badge">Клиент #${c.number}</div><h3>${c.name}</h3>
-        <p>📞 ${c.phone}</p><p>📐 ${c.area} м²</p><p>📍 ${c.address}</p><p><span class="status-badge ${cls}">${c.status}</span></p><p>💬 ${c.comment}</p><p>🕐 ${c.time}</p>${filesHtml}
+        <p>📞 ${c.phone}</p><p>📐 ${c.area} м²</p><p>📍 ${c.address}</p><p><span class="status-badge ${cls}">${c.status}</span></p><p>💬 ${c.comment}</p><p>🕐 ${c.time}</p>${filesHtml}${dealFilesHtml}${dealUploadHtml}
         <div class="input-group"><label>📎 Добавить файл</label><input type="file" id="newFile" accept=".pdf,.doc,.docx,.jpg,.png,.xlsx"></div>
         <button class="upload-btn" onclick="addFile(${n})">📤 Добавить файл</button>
         <select id="ns"><option ${c.status==='Новый'?'selected':''}>Новый</option><option ${c.status==='В работе'?'selected':''}>В работе</option><option ${c.status==='Договор'?'selected':''}>Договор</option><option ${c.status==='Закрыт'?'selected':''}>Закрыт</option></select>
@@ -181,9 +194,25 @@ async function addFile(n) {
     view(n);
 }
 
-function deleteFile(n, fileName) {
+async function addDealFile(n) {
     let c = clients.find(x=>x.number===n);
-    c.files = c.files.filter(f => f.name !== fileName);
+    let file = document.getElementById('dealFile').files[0];
+    if(!file) { alert('Выберите файл договора'); return; }
+    if(c.status !== 'Договор') { alert('❗Статус клиента должен быть "Договор"'); return; }
+    let reader = new FileReader();
+    let data = await new Promise(resolve => { reader.onload = e => resolve(e.target.result); reader.readAsDataURL(file); });
+    let fileData = {name: file.name, type: file.type, data: data};
+    if(!c.dealFiles) c.dealFiles = [];
+    c.dealFiles.push(fileData);
+    save();
+    await sendFileToGroup(fileData, c, `📄 ДОГОВОР клиента #${c.number} - ${c.name}`);
+    alert(`✅ Договор "${file.name}" добавлен и отправлен в группу!`);
+    view(n);
+}
+
+function deleteFile(n, fileName, type) {
+    let c = clients.find(x=>x.number===n);
+    c[type] = c[type].filter(f => f.name !== fileName);
     save();
     view(n);
 }
@@ -191,15 +220,22 @@ function deleteFile(n, fileName) {
 async function change(n) {
     let c = clients.find(x=>x.number===n);
     let old = c.status;
-    c.status = document.getElementById('ns').value;
+    let newStatus = document.getElementById('ns').value;
+    c.status = newStatus;
     save();
-    if(old !== c.status) { await sendToGroup(c, true); alert(`✅ Статус изменён!`); }
+    if(old !== newStatus) { 
+        await sendToGroup(c, true); 
+        alert(`✅ Статус изменён с "${old}" на "${newStatus}"!`);
+        if(newStatus === 'Договор') {
+            alert(`📄 Теперь можно загрузить договор клиента #${c.number}`);
+        }
+    }
     view(n);
 }
 
 function showStats() {
     let total = clients.length, newC = clients.filter(c=>c.status==='Новый').length, workC = clients.filter(c=>c.status==='В работе').length, dealC = clients.filter(c=>c.status==='Договор').length, closedC = clients.filter(c=>c.status==='Закрыт').length, areaTotal = 0, fileTotal = 0;
-    clients.forEach(c => { if(c.area !== '—') areaTotal += parseFloat(c.area) || 0; if(c.files) fileTotal += c.files.length; });
+    clients.forEach(c => { if(c.area !== '—') areaTotal += parseFloat(c.area) || 0; if(c.files) fileTotal += c.files.length; if(c.dealFiles) fileTotal += c.dealFiles.length; });
     let maxC = Math.max(newC, workC, dealC, closedC, 1);
     document.getElementById('content').innerHTML = `<div class="card"><h3 style="text-align:center;color:#ffd700;">📊 СТАТИСТИКА</h3>
         <p>👥 Всего: <b style="color:#ffd700;">${total}</b></p><p>📐 Площадь: <b>${areaTotal} м²</b></p><p>📎 Всего файлов: <b>${fileTotal}</b></p><hr>
