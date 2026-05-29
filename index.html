@@ -1,52 +1,92 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>CRM - Neostyle</title>
+    <title>Neostyle CRM</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; background: #0a0a0a; min-height: 100vh; padding: 20px; }
         .app-container { max-width: 500px; margin: 0 auto; }
-        .header { background: rgba(255,255,255,0.95); border-radius: 28px; padding: 20px; margin-bottom: 20px; text-align: center; box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
-        .header h1 { font-size: 28px; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        /* Шапка с лого */
+        .header { background: #111; border-radius: 28px; padding: 20px; margin-bottom: 20px; text-align: center; border: 1px solid #222; }
+        .logo { font-family: 'Impact', 'Arial Black', sans-serif; font-size: 32px; letter-spacing: 2px; }
+        .logo-neo { color: #fff; }
+        .logo-style { color: #ffd700; }
+        .logo-arch { font-size: 14px; color: #888; letter-spacing: 4px; margin-top: 5px; }
+        
+        /* Кнопки фильтров */
+        .filter-buttons { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+        .filter-btn { flex: 1; background: #1a1a1a; border: none; padding: 10px; border-radius: 30px; font-size: 13px; font-weight: 600; cursor: pointer; color: #888; transition: all 0.2s; }
+        .filter-btn.active { background: #ffd700; color: #111; }
+        
+        /* Меню кнопки */
         .menu-buttons { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
-        .menu-btn { flex: 1; border: none; padding: 14px; border-radius: 16px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; gap: 8px; min-width: 100px; }
+        .menu-btn { flex: 1; border: none; padding: 14px; border-radius: 16px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s; background: #1a1a1a; color: white; border: 1px solid #333; }
         .menu-btn:active { transform: scale(0.96); }
-        .menu-btn.add { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
-        .menu-btn.list { background: white; color: #333; }
-        .menu-btn.stats { background: white; color: #333; }
-        .menu-btn.clear { background: #ef4444; color: white; }
-        .card { background: white; border-radius: 24px; padding: 20px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .input-group { margin-bottom: 16px; }
-        .input-group label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 6px; }
-        input, select, textarea { width: 100%; padding: 14px; border: 1.5px solid #e0e0e0; border-radius: 14px; font-size: 16px; transition: all 0.2s; background: #f9f9f9; font-family: inherit; }
-        input:focus, select:focus, textarea:focus { outline: none; border-color: #667eea; background: white; }
-        textarea { resize: vertical; min-height: 80px; }
-        .save-btn { background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 16px; border-radius: 16px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; transition: all 0.2s; }
-        .save-btn:active { transform: scale(0.98); }
-        .client-card { background: white; border-radius: 20px; padding: 16px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s; border-left: 4px solid #667eea; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .client-card:active { transform: scale(0.98); }
-        .client-name { font-size: 18px; font-weight: bold; color: #333; }
-        .client-number { background: #667eea; color: white; border-radius: 20px; padding: 4px 12px; font-size: 12px; display: inline-block; margin-bottom: 8px; }
-        .client-info { font-size: 14px; color: #666; margin-top: 8px; display: flex; gap: 16px; flex-wrap: wrap; }
+        .menu-btn.add { background: #ffd700; color: #111; border: none; }
+        .menu-btn.clear { background: #2a2a2a; color: #ff4444; }
+        
+        /* Карточки */
+        .card { background: #111; border-radius: 24px; padding: 20px; margin-bottom: 12px; border: 1px solid #222; }
+        .client-card { background: #111; border-radius: 20px; padding: 16px; margin-bottom: 12px; cursor: pointer; border-left: 4px solid #ffd700; border: 1px solid #222; transition: all 0.2s; }
+        .client-card:active { transform: scale(0.98); background: #1a1a1a; }
+        .client-name { font-size: 18px; font-weight: bold; color: #fff; }
+        .client-number { background: #ffd700; color: #111; border-radius: 20px; padding: 4px 12px; font-size: 12px; display: inline-block; margin-bottom: 8px; font-weight: bold; }
+        .client-info { font-size: 14px; color: #888; margin-top: 8px; display: flex; gap: 16px; flex-wrap: wrap; }
+        
+        /* Статус бейджи */
         .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-        .status-new { background: #e0f2fe; color: #0284c7; }
-        .status-work { background: #fef3c7; color: #d97706; }
-        .status-deal { background: #dcfce7; color: #16a34a; }
-        .status-closed { background: #f1f5f9; color: #475569; }
-        .empty-state { text-align: center; padding: 40px; color: #999; }
-        .number-badge { background: linear-gradient(135deg, #667eea, #764ba2); color: white; border-radius: 30px; padding: 8px 16px; display: inline-block; margin-bottom: 20px; font-weight: bold; }
+        .status-new { background: #1a3a5c; color: #66ccff; }
+        .status-work { background: #5c3a1a; color: #ffcc66; }
+        .status-deal { background: #1a5c2a; color: #66ff88; }
+        .status-closed { background: #3a3a3a; color: #aaa; }
+        
+        /* Поля ввода */
+        .input-group { margin-bottom: 16px; }
+        .input-group label { display: block; font-size: 13px; font-weight: 600; color: #aaa; margin-bottom: 6px; }
+        input, select, textarea { width: 100%; padding: 14px; border: 1px solid #333; border-radius: 14px; font-size: 16px; background: #1a1a1a; color: white; font-family: inherit; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #ffd700; }
+        textarea { resize: vertical; min-height: 80px; }
+        
+        /* Кнопка сохранения */
+        .save-btn { background: #ffd700; color: #111; border: none; padding: 16px; border-radius: 16px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; transition: all 0.2s; }
+        .save-btn:active { transform: scale(0.98); }
+        
+        /* Диаграмма */
+        .chart-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .chart-label { width: 90px; font-size: 14px; color: #aaa; }
+        .chart-fill { height: 24px; border-radius: 12px; background: #ffd700; }
+        .chart-value { width: 40px; font-size: 14px; color: #fff; font-weight: bold; }
+        
+        .empty-state { text-align: center; padding: 40px; color: #666; }
+        .number-badge { background: #ffd700; color: #111; border-radius: 30px; padding: 8px 16px; display: inline-block; margin-bottom: 20px; font-weight: bold; }
+        
+        hr { border-color: #222; margin: 20px 0; }
     </style>
 </head>
 <body>
     <div class="app-container">
-        <div class="header"><h1>🤖 Neostyle CRM</h1><p>Управление клиентами</p></div>
+        <div class="header">
+            <div class="logo">
+                <span class="logo-neo">NEO</span><span class="logo-style">STYLE</span>
+            </div>
+            <div class="logo-arch">ARCHITECTURAL GROUP</div>
+        </div>
+        
+        <div class="filter-buttons" id="filterButtons">
+            <button class="filter-btn active" onclick="setFilter('all')">📋 Все</button>
+            <button class="filter-btn" onclick="setFilter('Новый')">🟢 Новые</button>
+            <button class="filter-btn" onclick="setFilter('В работе')">🟡 В работе</button>
+            <button class="filter-btn" onclick="setFilter('Договор')">🔵 Договор</button>
+            <button class="filter-btn" onclick="setFilter('Закрыт')">✅ Закрыты</button>
+        </div>
+        
         <div class="menu-buttons">
             <button class="menu-btn add" onclick="showAdd()">➕ Добавить</button>
-            <button class="menu-btn list" onclick="showList()">📋 Список</button>
-            <button class="menu-btn stats" onclick="showStats()">📊 Статистика</button>
+            <button class="menu-btn" onclick="showList()">📋 Список</button>
+            <button class="menu-btn" onclick="showStats()">📊 Статистика</button>
             <button class="menu-btn clear" onclick="clearAll()">🗑️ Очистить</button>
         </div>
         <div id="content"></div>
@@ -54,12 +94,12 @@
     <script>
         let clients = [];
         let nextNumber = 1;
+        let currentFilter = 'all';
         
         function load() {
             let saved = localStorage.getItem('clients');
             if(saved) {
                 clients = JSON.parse(saved);
-                // Фильтруем только валидных клиентов
                 clients = clients.filter(c => c.name && typeof c.number === 'number');
             }
             let savedNum = localStorage.getItem('nextNumber');
@@ -78,32 +118,37 @@
         const CHAT_ID = -1003831665624;
         const BOT_TOKEN = "8628159718:AAH8tPnTX0fReDzpByMG44A-iF6HG-Pm5-8";
         
-        async function sendToGroup(client) {
-            let message = `🆕 *НОВЫЙ КЛИЕНТ #${client.number}*%0A%0A` +
+        async function sendToGroup(client, isStatusChange = false) {
+            let title = isStatusChange ? `🔄 *ИЗМЕНЕНИЕ СТАТУСА*` : `🆕 *НОВЫЙ КЛИЕНТ #${client.number}*`;
+            let message = `${title}%0A%0A` +
                           `📛 *Имя:* ${client.name}%0A` +
                           `📞 *Телефон:* ${client.phone}%0A` +
                           `📐 *Площадь:* ${client.area} м²%0A` +
                           `📍 *Адрес:* ${client.address}%0A` +
                           `📌 *Статус:* ${client.status}%0A` +
                           `💬 *Комментарий:* ${client.comment}%0A%0A` +
-                          `🕐 *Добавлен:* ${client.time}`;
+                          `🕐 *${isStatusChange ? 'Обновлён' : 'Добавлен'}:* ${new Date().toLocaleString()}`;
             
             const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${message}&parse_mode=Markdown`;
             try {
-                let response = await fetch(url);
-                let result = await response.json();
-                if(result.ok) {
-                    alert(`✅ Клиент #${client.number} добавлен и отправлен в группу!`);
-                } else {
-                    alert("❌ Ошибка Telegram: " + result.description);
-                }
-            } catch(e) { 
-                alert("❌ Ошибка: " + e.message); 
-            }
+                await fetch(url);
+            } catch(e) { console.log(e); }
+        }
+        
+        function setFilter(status) {
+            currentFilter = status;
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            showList();
+        }
+        
+        function getFilteredClients() {
+            if(currentFilter === 'all') return clients;
+            return clients.filter(c => c.status === currentFilter);
         }
         
         function clearAll() {
-            if(confirm("🗑️ Удалить ВСЕХ клиентов? Это действие не обратимо!")) {
+            if(confirm("🗑️ Удалить ВСЕХ клиентов?")) {
                 clients = [];
                 nextNumber = 1;
                 save();
@@ -142,18 +187,20 @@
             };
             clients.push(newClient);
             save();
-            sendToGroup(newClient);
+            sendToGroup(newClient, false);
             nextNumber++;
             showList();
+            alert(`✅ Клиент #${newClient.number} добавлен и отправлен в группу!`);
         }
         
         function showList() {
-            if(clients.length === 0) { 
-                document.getElementById('content').innerHTML = '<div class="card empty-state">📭 Нет клиентов<br><br>Нажмите «Добавить»</div>'; 
+            let filtered = getFilteredClients();
+            if(filtered.length === 0) { 
+                document.getElementById('content').innerHTML = '<div class="card empty-state">📭 Нет клиентов в этой категории</div>'; 
                 return; 
             }
             let html = '';
-            for(let c of clients) {
+            for(let c of filtered) {
                 let statusClass = c.status === 'Новый' ? 'status-new' : (c.status === 'В работе' ? 'status-work' : (c.status === 'Договор' ? 'status-deal' : 'status-closed'));
                 html += `<div class="client-card" onclick="view(${c.number})">
                     <div class="client-number">#${c.number}</div>
@@ -172,13 +219,13 @@
             document.getElementById('content').innerHTML = `
                 <div class="card">
                     <div class="number-badge">Клиент #${c.number}</div>
-                    <h3 style="margin-bottom: 16px;">${c.name}</h3>
-                    <div class="input-group"><label>📞 Телефон</label><p style="padding: 10px; background: #f5f5f5; border-radius: 12px;">${c.phone}</p></div>
-                    <div class="input-group"><label>📐 Площадь</label><p style="padding: 10px; background: #f5f5f5; border-radius: 12px;">${c.area} м²</p></div>
-                    <div class="input-group"><label>📍 Адрес</label><p style="padding: 10px; background: #f5f5f5; border-radius: 12px;">${c.address}</p></div>
+                    <h3 style="margin-bottom: 16px; color: #fff;">${c.name}</h3>
+                    <div class="input-group"><label>📞 Телефон</label><p style="padding: 10px; background: #1a1a1a; border-radius: 12px; color: #aaa;">${c.phone}</p></div>
+                    <div class="input-group"><label>📐 Площадь</label><p style="padding: 10px; background: #1a1a1a; border-radius: 12px; color: #aaa;">${c.area} м²</p></div>
+                    <div class="input-group"><label>📍 Адрес</label><p style="padding: 10px; background: #1a1a1a; border-radius: 12px; color: #aaa;">${c.address}</p></div>
                     <div class="input-group"><label>📌 Статус</label><p><span class="status-badge ${statusClass}" style="font-size: 16px; padding: 8px 16px;">${c.status}</span></p></div>
-                    <div class="input-group"><label>💬 Комментарий</label><p style="padding: 10px; background: #f5f5f5; border-radius: 12px;">${c.comment}</p></div>
-                    <div class="input-group"><label>🕐 Добавлен</label><p style="padding: 10px; background: #f5f5f5; border-radius: 12px;">${c.time}</p></div>
+                    <div class="input-group"><label>💬 Комментарий</label><p style="padding: 10px; background: #1a1a1a; border-radius: 12px; color: #aaa;">${c.comment}</p></div>
+                    <div class="input-group"><label>🕐 Добавлен</label><p style="padding: 10px; background: #1a1a1a; border-radius: 12px; color: #aaa;">${c.time}</p></div>
                     <div class="input-group"><label>✏️ Изменить статус</label>
                         <select id="ns">
                             <option ${c.status === 'Новый' ? 'selected' : ''}>Новый</option>
@@ -188,39 +235,52 @@
                         </select>
                     </div>
                     <button class="save-btn" onclick="change(${c.number})">🔄 Обновить статус</button>
-                    <button class="save-btn" style="background: #6c757d; margin-top: 10px;" onclick="showList()">◀️ Назад к списку</button>
+                    <button class="save-btn" style="background: #2a2a2a; color: white; margin-top: 10px;" onclick="showList()">◀️ Назад к списку</button>
                 </div>
             `;
         }
         
-        function change(number) {
+        async function change(number) {
             let c = clients.find(x => x.number === number);
             if(c) {
-                c.status = document.getElementById('ns').value;
+                let oldStatus = c.status;
+                let newStatus = document.getElementById('ns').value;
+                c.status = newStatus;
                 save();
+                
+                if(oldStatus !== newStatus) {
+                    await sendToGroup(c, true);
+                    alert(`✅ Статус изменён с "${oldStatus}" на "${newStatus}". Отправлено в группу!`);
+                }
                 view(number);
             }
         }
         
         function showStats() {
-            let total = clients.length, areaTotal = 0, newCount = 0, workCount = 0, dealCount = 0, closedCount = 0;
+            let total = clients.length;
+            let newCount = clients.filter(c => c.status === 'Новый').length;
+            let workCount = clients.filter(c => c.status === 'В работе').length;
+            let dealCount = clients.filter(c => c.status === 'Договор').length;
+            let closedCount = clients.filter(c => c.status === 'Закрыт').length;
+            let areaTotal = 0;
             for(let c of clients) {
                 if(c.area !== '—') areaTotal += parseFloat(c.area) || 0;
-                if(c.status === 'Новый') newCount++;
-                else if(c.status === 'В работе') workCount++;
-                else if(c.status === 'Договор') dealCount++;
-                else if(c.status === 'Закрыт') closedCount++;
             }
+            
+            let maxCount = Math.max(newCount, workCount, dealCount, closedCount, 1);
+            
             document.getElementById('content').innerHTML = `
-                <div class="card"><h3 style="margin-bottom: 20px; text-align: center;">📊 Статистика</h3>
-                <div class="input-group"><label>👥 Всего клиентов</label><p style="font-size: 32px; font-weight: bold; color: #667eea;">${total}</p></div>
-                <div class="input-group"><label>📐 Общая площадь</label><p style="font-size: 24px; font-weight: bold;">${areaTotal} м²</p></div>
-                <hr style="margin: 20px 0;">
-                <div class="input-group"><label>🟢 Новые</label><p style="font-size: 20px;">${newCount}</p></div>
-                <div class="input-group"><label>🟡 В работе</label><p style="font-size: 20px;">${workCount}</p></div>
-                <div class="input-group"><label>🔵 Договор</label><p style="font-size: 20px;">${dealCount}</p></div>
-                <div class="input-group"><label>✅ Закрыты</label><p style="font-size: 20px;">${closedCount}</p></div>
-                <button class="save-btn" style="background: #6c757d; margin-top: 20px;" onclick="showList()">◀️ Назад</button></div>
+                <div class="card">
+                    <h3 style="margin-bottom: 20px; text-align: center; color: #ffd700;">📊 СТАТИСТИКА</h3>
+                    <div class="input-group"><label>👥 Всего клиентов</label><p style="font-size: 32px; font-weight: bold; color: #ffd700;">${total}</p></div>
+                    <div class="input-group"><label>📐 Общая площадь</label><p style="font-size: 24px; font-weight: bold; color: #fff;">${areaTotal} м²</p></div>
+                    <hr>
+                    <div class="chart-bar"><span class="chart-label">🟢 Новые</span><div class="chart-fill" style="width: ${(newCount/maxCount)*100}%; background: #66ccff;"></div><span class="chart-value">${newCount}</span></div>
+                    <div class="chart-bar"><span class="chart-label">🟡 В работе</span><div class="chart-fill" style="width: ${(workCount/maxCount)*100}%; background: #ffcc66;"></div><span class="chart-value">${workCount}</span></div>
+                    <div class="chart-bar"><span class="chart-label">🔵 Договор</span><div class="chart-fill" style="width: ${(dealCount/maxCount)*100}%; background: #66ff88;"></div><span class="chart-value">${dealCount}</span></div>
+                    <div class="chart-bar"><span class="chart-label">✅ Закрыты</span><div class="chart-fill" style="width: ${(closedCount/maxCount)*100}%; background: #aaa;"></div><span class="chart-value">${closedCount}</span></div>
+                    <button class="save-btn" style="background: #2a2a2a; color: white; margin-top: 20px;" onclick="showList()">◀️ Назад</button>
+                </div>
             `;
         }
         
