@@ -6,286 +6,140 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; background: #0a0a0a; min-height: 100vh; padding: 20px; }
+        body { background: #0a0a0a; padding: 20px; font-family: Arial, sans-serif; }
         .app-container { max-width: 500px; margin: 0 auto; }
-        
-        /* Шапка с лого */
-        .header { background: #111; border-radius: 28px; padding: 20px; margin-bottom: 20px; text-align: center; border: 1px solid #222; }
-        .logo { font-family: 'Impact', 'Arial Black', sans-serif; font-size: 32px; letter-spacing: 2px; }
-        .logo-neo { color: #fff; }
-        .logo-style { color: #ffd700; }
-        .logo-arch { font-size: 14px; color: #888; letter-spacing: 4px; margin-top: 5px; }
-        
-        /* Кнопки фильтров */
+        .header { background: #111; border-radius: 28px; padding: 20px; text-align: center; margin-bottom: 20px; border: 1px solid #222; }
+        .logo { font-size: 32px; font-weight: bold; }
+        .logo span:first-child { color: white; }
+        .logo span:last-child { color: #ffd700; }
+        .sub { font-size: 12px; color: #888; margin-top: 5px; }
         .filter-buttons { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
-        .filter-btn { flex: 1; background: #1a1a1a; border: none; padding: 10px; border-radius: 30px; font-size: 13px; font-weight: 600; cursor: pointer; color: #888; transition: all 0.2s; }
+        .filter-btn { flex: 1; background: #1a1a1a; border: none; padding: 10px; border-radius: 30px; color: #888; cursor: pointer; }
         .filter-btn.active { background: #ffd700; color: #111; }
-        
-        /* Меню кнопки */
-        .menu-buttons { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
-        .menu-btn { flex: 1; border: none; padding: 14px; border-radius: 16px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s; background: #1a1a1a; color: white; border: 1px solid #333; }
-        .menu-btn:active { transform: scale(0.96); }
-        .menu-btn.add { background: #ffd700; color: #111; border: none; }
+        .menu-buttons { display: flex; gap: 12px; margin-bottom: 20px; }
+        .menu-btn { flex: 1; background: #1a1a1a; border: none; padding: 14px; border-radius: 16px; color: white; cursor: pointer; }
+        .menu-btn.add { background: #ffd700; color: #111; }
         .menu-btn.clear { background: #2a2a2a; color: #ff4444; }
-        
-        /* Карточки */
         .card { background: #111; border-radius: 24px; padding: 20px; margin-bottom: 12px; border: 1px solid #222; }
-        .client-card { background: #111; border-radius: 20px; padding: 16px; margin-bottom: 12px; cursor: pointer; border-left: 4px solid #ffd700; border: 1px solid #222; transition: all 0.2s; }
-        .client-card:active { transform: scale(0.98); background: #1a1a1a; }
-        .client-name { font-size: 18px; font-weight: bold; color: #fff; }
-        .client-number { background: #ffd700; color: #111; border-radius: 20px; padding: 4px 12px; font-size: 12px; display: inline-block; margin-bottom: 8px; font-weight: bold; }
-        .client-info { font-size: 14px; color: #888; margin-top: 8px; display: flex; gap: 16px; flex-wrap: wrap; }
-        
-        /* Статус бейджи */
-        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .client-card { background: #111; border-radius: 20px; padding: 16px; margin-bottom: 12px; cursor: pointer; border-left: 4px solid #ffd700; }
+        .client-name { font-size: 18px; font-weight: bold; color: white; }
+        .client-number { background: #ffd700; color: #111; border-radius: 20px; padding: 4px 12px; font-size: 12px; display: inline-block; }
+        .client-info { font-size: 14px; color: #888; margin-top: 8px; }
+        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; }
         .status-new { background: #1a3a5c; color: #66ccff; }
         .status-work { background: #5c3a1a; color: #ffcc66; }
         .status-deal { background: #1a5c2a; color: #66ff88; }
         .status-closed { background: #3a3a3a; color: #aaa; }
-        
-        /* Поля ввода */
-        .input-group { margin-bottom: 16px; }
-        .input-group label { display: block; font-size: 13px; font-weight: 600; color: #aaa; margin-bottom: 6px; }
-        input, select, textarea { width: 100%; padding: 14px; border: 1px solid #333; border-radius: 14px; font-size: 16px; background: #1a1a1a; color: white; font-family: inherit; }
-        input:focus, select:focus, textarea:focus { outline: none; border-color: #ffd700; }
-        textarea { resize: vertical; min-height: 80px; }
-        
-        /* Кнопка сохранения */
-        .save-btn { background: #ffd700; color: #111; border: none; padding: 16px; border-radius: 16px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; transition: all 0.2s; }
-        .save-btn:active { transform: scale(0.98); }
-        
-        /* Диаграмма */
+        input, select, textarea { width: 100%; padding: 14px; border: 1px solid #333; border-radius: 14px; background: #1a1a1a; color: white; }
+        .save-btn { background: #ffd700; color: #111; border: none; padding: 16px; border-radius: 16px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%; }
         .chart-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-        .chart-label { width: 90px; font-size: 14px; color: #aaa; }
+        .chart-label { width: 80px; color: #aaa; }
         .chart-fill { height: 24px; border-radius: 12px; background: #ffd700; }
-        .chart-value { width: 40px; font-size: 14px; color: #fff; font-weight: bold; }
-        
         .empty-state { text-align: center; padding: 40px; color: #666; }
         .number-badge { background: #ffd700; color: #111; border-radius: 30px; padding: 8px 16px; display: inline-block; margin-bottom: 20px; font-weight: bold; }
-        
         hr { border-color: #222; margin: 20px 0; }
     </style>
 </head>
 <body>
-    <div class="app-container">
-        <div class="header">
-            <div class="logo">
-                <span class="logo-neo">NEO</span><span class="logo-style">STYLE</span>
-            </div>
-            <div class="logo-arch">ARCHITECTURAL GROUP</div>
-        </div>
-        
-        <div class="filter-buttons" id="filterButtons">
-            <button class="filter-btn active" onclick="setFilter('all')">📋 Все</button>
-            <button class="filter-btn" onclick="setFilter('Новый')">🟢 Новые</button>
-            <button class="filter-btn" onclick="setFilter('В работе')">🟡 В работе</button>
-            <button class="filter-btn" onclick="setFilter('Договор')">🔵 Договор</button>
-            <button class="filter-btn" onclick="setFilter('Закрыт')">✅ Закрыты</button>
-        </div>
-        
-        <div class="menu-buttons">
-            <button class="menu-btn add" onclick="showAdd()">➕ Добавить</button>
-            <button class="menu-btn" onclick="showList()">📋 Список</button>
-            <button class="menu-btn" onclick="showStats()">📊 Статистика</button>
-            <button class="menu-btn clear" onclick="clearAll()">🗑️ Очистить</button>
-        </div>
-        <div id="content"></div>
+<div class="app-container">
+    <div class="header">
+        <div class="logo"><span>NEO</span><span>STYLE</span></div>
+        <div class="sub">ARCHITECTURAL GROUP</div>
     </div>
-    <script>
-        let clients = [];
-        let nextNumber = 1;
-        let currentFilter = 'all';
-        
-        function load() {
-            let saved = localStorage.getItem('clients');
-            if(saved) {
-                clients = JSON.parse(saved);
-                clients = clients.filter(c => c.name && typeof c.number === 'number');
-            }
-            let savedNum = localStorage.getItem('nextNumber');
-            if(savedNum) nextNumber = parseInt(savedNum);
-            if(clients.length > 0) {
-                let maxNum = Math.max(...clients.map(c => c.number));
-                if(nextNumber <= maxNum) nextNumber = maxNum + 1;
-            }
-        }
-        
-        function save() { 
-            localStorage.setItem('clients', JSON.stringify(clients)); 
-            localStorage.setItem('nextNumber', nextNumber);
-        }
-        
-        const CHAT_ID = -1003831665624;
-        const BOT_TOKEN = "8628159718:AAH8tPnTX0fReDzpByMG44A-iF6HG-Pm5-8";
-        
-        async function sendToGroup(client, isStatusChange = false) {
-            let title = isStatusChange ? `🔄 *ИЗМЕНЕНИЕ СТАТУСА*` : `🆕 *НОВЫЙ КЛИЕНТ #${client.number}*`;
-            let message = `${title}%0A%0A` +
-                          `📛 *Имя:* ${client.name}%0A` +
-                          `📞 *Телефон:* ${client.phone}%0A` +
-                          `📐 *Площадь:* ${client.area} м²%0A` +
-                          `📍 *Адрес:* ${client.address}%0A` +
-                          `📌 *Статус:* ${client.status}%0A` +
-                          `💬 *Комментарий:* ${client.comment}%0A%0A` +
-                          `🕐 *${isStatusChange ? 'Обновлён' : 'Добавлен'}:* ${new Date().toLocaleString()}`;
-            
-            const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${message}&parse_mode=Markdown`;
-            try {
-                await fetch(url);
-            } catch(e) { console.log(e); }
-        }
-        
-        function setFilter(status) {
-            currentFilter = status;
-            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-            showList();
-        }
-        
-        function getFilteredClients() {
-            if(currentFilter === 'all') return clients;
-            return clients.filter(c => c.status === currentFilter);
-        }
-        
-        function clearAll() {
-            if(confirm("🗑️ Удалить ВСЕХ клиентов?")) {
-                clients = [];
-                nextNumber = 1;
-                save();
-                showList();
-                alert("✅ Все данные очищены!");
-            }
-        }
-        
-        function showAdd() {
-            document.getElementById('content').innerHTML = `
-                <div class="card">
-                    <div class="number-badge">Новый клиент → #${nextNumber}</div>
-                    <div class="input-group"><label>📛 Имя клиента *</label><input id="name" placeholder="Иван Петров"></div>
-                    <div class="input-group"><label>📞 Телефон</label><input id="phone" placeholder="+7 999 123-45-67"></div>
-                    <div class="input-group"><label>📐 Площадь (м²)</label><input id="area" placeholder="75" type="number"></div>
-                    <div class="input-group"><label>📍 Адрес объекта</label><input id="address" placeholder="ул. Ленина, д. 10"></div>
-                    <div class="input-group"><label>📌 Статус</label><select id="status"><option>Новый</option><option>В работе</option><option>Договор</option><option>Закрыт</option></select></div>
-                    <div class="input-group"><label>💬 Комментарий</label><textarea id="comment" rows="3" placeholder="Дополнительная информация..."></textarea></div>
-                    <button class="save-btn" onclick="add()">✅ Сохранить и отправить</button>
-                </div>
-            `;
-        }
-        
-        function add() {
-            let name = document.getElementById('name').value;
-            if(!name) { alert('Введите имя клиента'); return; }
-            let newClient = {
-                number: nextNumber,
-                name: name,
-                phone: document.getElementById('phone').value || '—',
-                area: document.getElementById('area').value || '—',
-                address: document.getElementById('address').value || '—',
-                status: document.getElementById('status').value,
-                comment: document.getElementById('comment').value || '—',
-                time: new Date().toLocaleString()
-            };
-            clients.push(newClient);
-            save();
-            sendToGroup(newClient, false);
-            nextNumber++;
-            showList();
-            alert(`✅ Клиент #${newClient.number} добавлен и отправлен в группу!`);
-        }
-        
-        function showList() {
-            let filtered = getFilteredClients();
-            if(filtered.length === 0) { 
-                document.getElementById('content').innerHTML = '<div class="card empty-state">📭 Нет клиентов в этой категории</div>'; 
-                return; 
-            }
-            let html = '';
-            for(let c of filtered) {
-                let statusClass = c.status === 'Новый' ? 'status-new' : (c.status === 'В работе' ? 'status-work' : (c.status === 'Договор' ? 'status-deal' : 'status-closed'));
-                html += `<div class="client-card" onclick="view(${c.number})">
-                    <div class="client-number">#${c.number}</div>
-                    <div class="client-name">${c.name}</div>
-                    <div class="client-info"><span>📞 ${c.phone}</span><span>📐 ${c.area} м²</span></div>
-                    <div style="margin-top: 8px;"><span class="status-badge ${statusClass}">${c.status}</span></div>
-                </div>`;
-            }
-            document.getElementById('content').innerHTML = html;
-        }
-        
-        function view(number) {
-            let c = clients.find(x => x.number === number);
-            if(!c) { showList(); return; }
-            let statusClass = c.status === 'Новый' ? 'status-new' : (c.status === 'В работе' ? 'status-work' : (c.status === 'Договор' ? 'status-deal' : 'status-closed'));
-            document.getElementById('content').innerHTML = `
-                <div class="card">
-                    <div class="number-badge">Клиент #${c.number}</div>
-                    <h3 style="margin-bottom: 16px; color: #fff;">${c.name}</h3>
-                    <div class="input-group"><label>📞 Телефон</label><p style="padding: 10px; background: #1a1a1a; border-radius: 12px; color: #aaa;">${c.phone}</p></div>
-                    <div class="input-group"><label>📐 Площадь</label><p style="padding: 10px; background: #1a1a1a; border-radius: 12px; color: #aaa;">${c.area} м²</p></div>
-                    <div class="input-group"><label>📍 Адрес</label><p style="padding: 10px; background: #1a1a1a; border-radius: 12px; color: #aaa;">${c.address}</p></div>
-                    <div class="input-group"><label>📌 Статус</label><p><span class="status-badge ${statusClass}" style="font-size: 16px; padding: 8px 16px;">${c.status}</span></p></div>
-                    <div class="input-group"><label>💬 Комментарий</label><p style="padding: 10px; background: #1a1a1a; border-radius: 12px; color: #aaa;">${c.comment}</p></div>
-                    <div class="input-group"><label>🕐 Добавлен</label><p style="padding: 10px; background: #1a1a1a; border-radius: 12px; color: #aaa;">${c.time}</p></div>
-                    <div class="input-group"><label>✏️ Изменить статус</label>
-                        <select id="ns">
-                            <option ${c.status === 'Новый' ? 'selected' : ''}>Новый</option>
-                            <option ${c.status === 'В работе' ? 'selected' : ''}>В работе</option>
-                            <option ${c.status === 'Договор' ? 'selected' : ''}>Договор</option>
-                            <option ${c.status === 'Закрыт' ? 'selected' : ''}>Закрыт</option>
-                        </select>
-                    </div>
-                    <button class="save-btn" onclick="change(${c.number})">🔄 Обновить статус</button>
-                    <button class="save-btn" style="background: #2a2a2a; color: white; margin-top: 10px;" onclick="showList()">◀️ Назад к списку</button>
-                </div>
-            `;
-        }
-        
-        async function change(number) {
-            let c = clients.find(x => x.number === number);
-            if(c) {
-                let oldStatus = c.status;
-                let newStatus = document.getElementById('ns').value;
-                c.status = newStatus;
-                save();
-                
-                if(oldStatus !== newStatus) {
-                    await sendToGroup(c, true);
-                    alert(`✅ Статус изменён с "${oldStatus}" на "${newStatus}". Отправлено в группу!`);
-                }
-                view(number);
-            }
-        }
-        
-        function showStats() {
-            let total = clients.length;
-            let newCount = clients.filter(c => c.status === 'Новый').length;
-            let workCount = clients.filter(c => c.status === 'В работе').length;
-            let dealCount = clients.filter(c => c.status === 'Договор').length;
-            let closedCount = clients.filter(c => c.status === 'Закрыт').length;
-            let areaTotal = 0;
-            for(let c of clients) {
-                if(c.area !== '—') areaTotal += parseFloat(c.area) || 0;
-            }
-            
-            let maxCount = Math.max(newCount, workCount, dealCount, closedCount, 1);
-            
-            document.getElementById('content').innerHTML = `
-                <div class="card">
-                    <h3 style="margin-bottom: 20px; text-align: center; color: #ffd700;">📊 СТАТИСТИКА</h3>
-                    <div class="input-group"><label>👥 Всего клиентов</label><p style="font-size: 32px; font-weight: bold; color: #ffd700;">${total}</p></div>
-                    <div class="input-group"><label>📐 Общая площадь</label><p style="font-size: 24px; font-weight: bold; color: #fff;">${areaTotal} м²</p></div>
-                    <hr>
-                    <div class="chart-bar"><span class="chart-label">🟢 Новые</span><div class="chart-fill" style="width: ${(newCount/maxCount)*100}%; background: #66ccff;"></div><span class="chart-value">${newCount}</span></div>
-                    <div class="chart-bar"><span class="chart-label">🟡 В работе</span><div class="chart-fill" style="width: ${(workCount/maxCount)*100}%; background: #ffcc66;"></div><span class="chart-value">${workCount}</span></div>
-                    <div class="chart-bar"><span class="chart-label">🔵 Договор</span><div class="chart-fill" style="width: ${(dealCount/maxCount)*100}%; background: #66ff88;"></div><span class="chart-value">${dealCount}</span></div>
-                    <div class="chart-bar"><span class="chart-label">✅ Закрыты</span><div class="chart-fill" style="width: ${(closedCount/maxCount)*100}%; background: #aaa;"></div><span class="chart-value">${closedCount}</span></div>
-                    <button class="save-btn" style="background: #2a2a2a; color: white; margin-top: 20px;" onclick="showList()">◀️ Назад</button>
-                </div>
-            `;
-        }
-        
-        load();
-        showList();
-    </script>
+    
+    <div class="filter-buttons">
+        <button class="filter-btn active" onclick="setFilter('all')">Все</button>
+        <button class="filter-btn" onclick="setFilter('Новый')">Новые</button>
+        <button class="filter-btn" onclick="setFilter('В работе')">В работе</button>
+        <button class="filter-btn" onclick="setFilter('Договор')">Договор</button>
+        <button class="filter-btn" onclick="setFilter('Закрыт')">Закрыты</button>
+    </div>
+    
+    <div class="menu-buttons">
+        <button class="menu-btn add" onclick="showAdd()">➕ Добавить</button>
+        <button class="menu-btn" onclick="showList()">📋 Список</button>
+        <button class="menu-btn" onclick="showStats()">📊 Статистика</button>
+        <button class="menu-btn clear" onclick="clearAll()">🗑️ Очистить</button>
+    </div>
+    <div id="content"></div>
+</div>
+<script>
+let clients = [], nextNumber = 1, currentFilter = 'all';
+function load() { 
+    let s = localStorage.getItem('clients'); 
+    if(s) clients = JSON.parse(s); 
+    let n = localStorage.getItem('nextNumber'); 
+    if(n) nextNumber = parseInt(n); 
+    if(clients.length) nextNumber = Math.max(nextNumber, Math.max(...clients.map(c=>c.number))+1);
+}
+function save() { localStorage.setItem('clients', JSON.stringify(clients)); localStorage.setItem('nextNumber', nextNumber); }
+const CHAT_ID = -1003831665624, BOT_TOKEN = "8628159718:AAH8tPnTX0fReDzpByMG44A-iF6HG-Pm5-8";
+async function sendToGroup(c, isChange) { 
+    let t = isChange ? 'ИЗМЕНЕНИЕ СТАТУСА' : 'НОВЫЙ КЛИЕНТ #'+c.number; 
+    let m = `🆕 *${t}*%0A%0A📛 *Имя:* ${c.name}%0A📞 *Телефон:* ${c.phone}%0A📐 *Площадь:* ${c.area} м²%0A📍 *Адрес:* ${c.address}%0A📌 *Статус:* ${c.status}%0A💬 *Комментарий:* ${c.comment}`;
+    let url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${m}&parse_mode=Markdown`;
+    try { await fetch(url); } catch(e) { console.log(e); }
+}
+function setFilter(s) { currentFilter = s; document.querySelectorAll('.filter-btn').forEach((btn,i)=>btn.classList.toggle('active', btn.innerText === s || (s==='all' && btn.innerText==='Все'))); showList(); }
+function getFiltered() { return currentFilter === 'all' ? clients : clients.filter(c => c.status === currentFilter); }
+function clearAll() { if(confirm('Удалить всех?')) { clients = []; nextNumber = 1; save(); showList(); } }
+function showAdd() {
+    document.getElementById('content').innerHTML = `<div class="card"><div class="number-badge">Новый клиент → #${nextNumber}</div>
+        <div class="input-group"><label>📛 Имя *</label><input id="name" placeholder="Иван Петров"></div>
+        <div class="input-group"><label>📞 Телефон</label><input id="phone" placeholder="+7 999 123-45-67"></div>
+        <div class="input-group"><label>📐 Площадь (м²)</label><input id="area" placeholder="75" type="number"></div>
+        <div class="input-group"><label>📍 Адрес</label><input id="address" placeholder="ул. Ленина, д. 10"></div>
+        <div class="input-group"><label>📌 Статус</label><select id="status"><option>Новый</option><option>В работе</option><option>Договор</option><option>Закрыт</option></select></div>
+        <div class="input-group"><label>💬 Комментарий</label><textarea id="comment" rows="3"></textarea></div>
+        <button class="save-btn" onclick="add()">✅ Сохранить</button></div>`;
+}
+function add() {
+    let name = document.getElementById('name').value;
+    if(!name) { alert('Введите имя'); return; }
+    let c = { number: nextNumber, name: name, phone: document.getElementById('phone').value || '—', area: document.getElementById('area').value || '—', address: document.getElementById('address').value || '—', status: document.getElementById('status').value, comment: document.getElementById('comment').value || '—', time: new Date().toLocaleString() };
+    clients.push(c); save(); sendToGroup(c, false); nextNumber++; showList();
+    alert(`✅ Клиент #${c.number} добавлен!`);
+}
+function showList() {
+    let filtered = getFiltered();
+    if(!filtered.length) { document.getElementById('content').innerHTML = '<div class="card empty-state">📭 Нет клиентов</div>'; return; }
+    let html = '';
+    for(let c of filtered) {
+        let cls = c.status === 'Новый' ? 'status-new' : (c.status === 'В работе' ? 'status-work' : (c.status === 'Договор' ? 'status-deal' : 'status-closed'));
+        html += `<div class="client-card" onclick="view(${c.number})"><div class="client-number">#${c.number}</div><div class="client-name">${c.name}</div><div class="client-info">📞 ${c.phone} | 📐 ${c.area} м²</div><div><span class="status-badge ${cls}">${c.status}</span></div></div>`;
+    }
+    document.getElementById('content').innerHTML = html;
+}
+function view(n) {
+    let c = clients.find(x=>x.number===n);
+    let cls = c.status === 'Новый' ? 'status-new' : (c.status === 'В работе' ? 'status-work' : (c.status === 'Договор' ? 'status-deal' : 'status-closed'));
+    document.getElementById('content').innerHTML = `<div class="card"><div class="number-badge">Клиент #${c.number}</div><h3>${c.name}</h3>
+        <p>📞 ${c.phone}</p><p>📐 ${c.area} м²</p><p>📍 ${c.address}</p><p><span class="status-badge ${cls}">${c.status}</span></p><p>💬 ${c.comment}</p><p>🕐 ${c.time}</p>
+        <select id="ns"><option ${c.status==='Новый'?'selected':''}>Новый</option><option ${c.status==='В работе'?'selected':''}>В работе</option><option ${c.status==='Договор'?'selected':''}>Договор</option><option ${c.status==='Закрыт'?'selected':''}>Закрыт</option></select>
+        <button class="save-btn" onclick="change(${c.number})">🔄 Изменить статус</button>
+        <button class="save-btn" style="background:#2a2a2a;color:white;margin-top:10px;" onclick="showList()">◀️ Назад</button></div>`;
+}
+async function change(n) {
+    let c = clients.find(x=>x.number===n);
+    let old = c.status;
+    c.status = document.getElementById('ns').value;
+    save();
+    if(old !== c.status) { await sendToGroup(c, true); alert(`✅ Статус изменён!`); }
+    view(n);
+}
+function showStats() {
+    let total = clients.length, newC = clients.filter(c=>c.status==='Новый').length, workC = clients.filter(c=>c.status==='В работе').length, dealC = clients.filter(c=>c.status==='Договор').length, closedC = clients.filter(c=>c.status==='Закрыт').length, areaTotal = 0;
+    clients.forEach(c => { if(c.area !== '—') areaTotal += parseFloat(c.area) || 0; });
+    let maxC = Math.max(newC, workC, dealC, closedC, 1);
+    document.getElementById('content').innerHTML = `<div class="card"><h3 style="text-align:center;color:#ffd700;">📊 СТАТИСТИКА</h3>
+        <p>👥 Всего: <b style="color:#ffd700;">${total}</b></p><p>📐 Площадь: <b>${areaTotal} м²</b></p><hr>
+        <div class="chart-bar"><span class="chart-label">🟢 Новые</span><div class="chart-fill" style="width:${(newC/maxC)*100}%;background:#66ccff;"></div><span>${newC}</span></div>
+        <div class="chart-bar"><span class="chart-label">🟡 В работе</span><div class="chart-fill" style="width:${(workC/maxC)*100}%;background:#ffcc66;"></div><span>${workC}</span></div>
+        <div class="chart-bar"><span class="chart-label">🔵 Договор</span><div class="chart-fill" style="width:${(dealC/maxC)*100}%;background:#66ff88;"></div><span>${dealC}</span></div>
+        <div class="chart-bar"><span class="chart-label">✅ Закрыты</span><div class="chart-fill" style="width:${(closedC/maxC)*100}%;background:#aaa;"></div><span>${closedC}</span></div>
+        <button class="save-btn" style="background:#2a2a2a;color:white;margin-top:20px;" onclick="showList()">◀️ Назад</button></div>`;
+}
+load(); showList();
+</script>
 </body>
 </html>
