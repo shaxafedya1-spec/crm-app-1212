@@ -13,6 +13,13 @@
         .logo span:first-child { color: #fff; }
         .logo span:last-child { color: #ffd700; }
         .sub { font-size: 12px; color: #aaa; margin-top: 5px; }
+        
+        .currency-bar { display: flex; justify-content: space-between; align-items: center; background: #1a1a1a; border-radius: 30px; padding: 8px 16px; margin-bottom: 15px; }
+        .currency-btn { background: none; border: none; padding: 8px 16px; border-radius: 25px; cursor: pointer; color: #aaa; font-weight: bold; }
+        .currency-btn.active { background: #ffd700; color: #111; }
+        .rate-info { font-size: 12px; color: #888; }
+        .edit-rate { background: none; border: 1px solid #ffd700; color: #ffd700; border-radius: 20px; padding: 4px 12px; cursor: pointer; font-size: 11px; }
+        
         .filter-buttons { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
         .filter-btn { flex: 1; background: #1a1a1a; border: none; padding: 10px; border-radius: 30px; color: #ccc; cursor: pointer; }
         .filter-btn.active { background: #ffd700; color: #111; }
@@ -29,6 +36,7 @@
         .status-work { background: #5c3a1a; color: #ffcc66; }
         .status-deal { background: #1a5c2a; color: #66ff88; }
         .status-closed { background: #3a3a3a; color: #ccc; }
+        .status-rejected { background: #5c1a1a; color: #ff8888; }
         .input-group { margin-bottom: 16px; }
         .input-group label { display: block; font-size: 13px; font-weight: 600; color: #ffd700; margin-bottom: 6px; }
         input, select, textarea { width: 100%; padding: 14px; border: 1px solid #444; border-radius: 14px; background: #1a1a1a; color: #fff; font-size: 16px; }
@@ -44,18 +52,39 @@
         hr { border-color: #333; margin: 20px 0; }
         p, h3 { color: #fff; }
         .deal-section { border-top: 1px solid #333; margin-top: 15px; padding-top: 15px; }
+        .currency-input-group { display: flex; gap: 10px; align-items: center; }
+        .currency-input-group input { flex: 2; }
+        .currency-input-group select { flex: 1; }
     </style>
 </head>
 <body>
 <div class="app-container">
-    <div class="header"><div class="logo"><span>NEO</span><span>STYLE</span></div><div class="sub">ARCHITECTURAL GROUP</div></div>
+    <div class="header">
+        <div class="logo"><span>NEO</span><span>STYLE</span></div>
+        <div class="sub">ARCHITECTURAL GROUP</div>
+    </div>
+    
+    <!-- Панель валюты -->
+    <div class="currency-bar">
+        <div>
+            <button class="currency-btn" id="currencySum" onclick="setCurrency('sum')">🇺🇿 Сум</button>
+            <button class="currency-btn" id="currencyUsd" onclick="setCurrency('usd')">🇺🇸 USD</button>
+        </div>
+        <div class="rate-info">
+            1$ = <span id="rateValue">12800</span> сум
+            <button class="edit-rate" onclick="editRate()">✏️</button>
+        </div>
+    </div>
+    
     <div class="filter-buttons">
         <button class="filter-btn active" onclick="setFilter('all')">Все</button>
-        <button class="filter-btn" onclick="setFilter('Новый')">Новые</button>
-        <button class="filter-btn" onclick="setFilter('В работе')">В работе</button>
-        <button class="filter-btn" onclick="setFilter('Договор')">Договор</button>
-        <button class="filter-btn" onclick="setFilter('Закрыт')">Закрыты</button>
+        <button class="filter-btn" onclick="setFilter('Новый')">🟢 Новые</button>
+        <button class="filter-btn" onclick="setFilter('В работе')">🟡 В работе</button>
+        <button class="filter-btn" onclick="setFilter('Договор')">🔵 Договор</button>
+        <button class="filter-btn" onclick="setFilter('Закрыт')">✅ Закрыты</button>
+        <button class="filter-btn" onclick="setFilter('Отказ')">❌ Отказ</button>
     </div>
+    
     <div class="menu-buttons">
         <button class="menu-btn add" onclick="showAdd()">➕ Добавить</button>
         <button class="menu-btn" onclick="showList()">📋 Список</button>
@@ -64,26 +93,66 @@
     <div id="content"></div>
 </div>
 <script>
+// ========== НАСТРОЙКИ ==========
 let clients = [], nextNumber = 1, currentFilter = 'all';
+let currentCurrency = 'sum'; // 'sum' или 'usd'
+let usdRate = 12800;
 
-function formatNumber(num) { return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " "); }
-function formatPrice(p) { 
-    if(p === '—' || !p || p === 'undefined') return '—';
-    return p.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " сум"; 
+function loadCurrency() {
+    let saved = localStorage.getItem('currency');
+    if(saved) currentCurrency = saved;
+    let savedRate = localStorage.getItem('usdRate');
+    if(savedRate) usdRate = parseFloat(savedRate);
+    updateCurrencyUI();
 }
+function saveCurrency() {
+    localStorage.setItem('currency', currentCurrency);
+    localStorage.setItem('usdRate', usdRate);
+}
+function setCurrency(curr) {
+    currentCurrency = curr;
+    saveCurrency();
+    updateCurrencyUI();
+    showList(); // обновляем отображение цен
+}
+function updateCurrencyUI() {
+    document.getElementById('currencySum').classList.toggle('active', currentCurrency === 'sum');
+    document.getElementById('currencyUsd').classList.toggle('active', currentCurrency === 'usd');
+    document.getElementById('rateValue').innerText = usdRate;
+}
+function editRate() {
+    let newRate = prompt('Введите курс доллара (сум за 1$):', usdRate);
+    if(newRate && !isNaN(newRate)) {
+        usdRate = parseFloat(newRate);
+        saveCurrency();
+        document.getElementById('rateValue').innerText = usdRate;
+        showList();
+    }
+}
+function formatPrice(priceSum) {
+    if(!priceSum || priceSum === '—') return '—';
+    let num = parseFloat(priceSum);
+    if(currentCurrency === 'usd') {
+        let usd = num / usdRate;
+        return usd.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " $";
+    } else {
+        return num.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " сум";
+    }
+}
+function formatNumber(num) { return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " "); }
 
 function load() { 
     let s = localStorage.getItem('clients'); 
     if(s) clients = JSON.parse(s); 
     let n = localStorage.getItem('nextNumber'); 
     if(n) nextNumber = parseInt(n); 
+    loadCurrency();
 }
 function save() { localStorage.setItem('clients', JSON.stringify(clients)); localStorage.setItem('nextNumber', nextNumber); }
 
 const CHAT_ID = -1003831665624;
 const BOT_TOKEN = "8628159718:AAH8tPnTX0fReDzpByMG44A-iF6HG-Pm5-8";
 
-// Отправка полной карточки в группу
 async function sendFullCardToGroup(c, eventType = 'new') {
     let title = '';
     if(eventType === 'new') title = `🆕 НОВЫЙ КЛИЕНТ #${c.number}`;
@@ -96,21 +165,18 @@ async function sendFullCardToGroup(c, eventType = 'new') {
     message += `📐 Площадь: ${c.area} м²\n`;
     message += `📍 Адрес: ${c.address}\n`;
     message += `📌 Статус: ${c.status}\n`;
-    if(c.price && c.price !== '—' && c.price !== 'undefined') message += `💰 Сумма: ${formatPrice(c.price)}\n`;
+    if(c.priceSum && c.priceSum !== '—') {
+        let sumFormatted = parseFloat(c.priceSum).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+        let usdFormatted = (parseFloat(c.priceSum) / usdRate).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+        message += `💰 Сумма: ${sumFormatted} сум / ${usdFormatted} $\n`;
+    }
     message += `💬 Комментарий: ${c.comment}\n\n`;
     message += `🕐 ${new Date().toLocaleString()}`;
     
     const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(message)}`;
-    try {
-        await fetch(url);
-        return true;
-    } catch(e) { 
-        console.log('Ошибка отправки:', e);
-        return false;
-    }
+    try { await fetch(url); } catch(e) { console.log(e); }
 }
 
-// Отправка файла в группу
 async function sendFileToGroup(fileData, c, fileType = 'file') {
     try {
         let byteChars = atob(fileData.data.split(',')[1]);
@@ -123,21 +189,24 @@ async function sendFileToGroup(fileData, c, fileType = 'file') {
         let caption = fileType === 'deal' ? `📄 ДОГОВОР клиента #${c.number} - ${c.name}` : `📎 ${fileData.name} | Клиент #${c.number} - ${c.name}`;
         fd.append('caption', caption);
         await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendDocument`, {method: 'POST', body: fd});
-    } catch(e) { console.log('Ошибка отправки файла:', e); }
+    } catch(e) { console.log(e); }
 }
 
-function setFilter(s) { currentFilter = s; document.querySelectorAll('.filter-btn').forEach((btn,i)=>btn.classList.toggle('active', btn.innerText === s || (s==='all' && btn.innerText==='Все'))); showList(); }
+function setFilter(s) { 
+    currentFilter = s; 
+    document.querySelectorAll('.filter-btn').forEach((btn,i)=>btn.classList.toggle('active', btn.innerText === s || (s==='all' && btn.innerText==='Все'))); 
+    showList(); 
+}
 function getFiltered() { return currentFilter === 'all' ? clients : clients.filter(c => c.status === currentFilter); }
 
-// ФОРМА ДОБАВЛЕНИЯ - БЕЗ ПОЛЯ СУММЫ!
 function showAdd() {
     document.getElementById('content').innerHTML = `<div class="card"><div class="number-badge">Новый клиент → #${formatNumber(nextNumber)}</div>
         <div class="input-group"><label>📛 Имя *</label><input id="name" placeholder="Ислом Каримов"></div>
         <div class="input-group"><label>📞 Телефон</label><input id="phone" placeholder="+998 90 123 45 67"></div>
         <div class="input-group"><label>📐 Площадь (м²)</label><input id="area" placeholder="75" type="number"></div>
         <div class="input-group"><label>📍 Адрес</label><input id="address" placeholder="ул. Навои, 15"></div>
-        <div class="input-group"><label>📌 Статус</label><select id="status"><option>Новый</option><option>В работе</option><option>Договор</option><option>Закрыт</option></select></div>
-        <div class="input-group"><label>💬 Комментарий</label><textarea id="comment" rows="3" placeholder="Дополнительная информация..."></textarea></div>
+        <div class="input-group"><label>📌 Статус</label><select id="status"><option>Новый</option><option>В работе</option><option>Договор</option><option>Закрыт</option><option>Отказ</option></select></div>
+        <div class="input-group"><label>💬 Комментарий</label><textarea id="comment" rows="3"></textarea></div>
         <div class="input-group"><label>📎 Файлы</label><input type="file" id="files" multiple accept=".pdf,.doc,.docx,.jpg,.png"></div>
         <button class="save-btn" onclick="add()">✅ Сохранить</button></div>`;
 }
@@ -161,7 +230,7 @@ async function add() {
         area: document.getElementById('area').value || '—',
         address: document.getElementById('address').value || '—',
         status: document.getElementById('status').value,
-        price: '—',  // сумма пустая до подписания договора
+        priceSum: '—',
         comment: document.getElementById('comment').value || '—',
         time: new Date().toLocaleString('ru-RU'),
         files: fileDataArray,
@@ -171,15 +240,8 @@ async function add() {
     
     clients.push(newClient);
     save();
-    
-    // Отправляем карточку в группу
     await sendFullCardToGroup(newClient, 'new');
-    
-    // Отправляем файлы
-    for(let f of fileDataArray) {
-        await sendFileToGroup(f, newClient, 'file');
-    }
-    
+    for(let f of fileDataArray) await sendFileToGroup(f, newClient, 'file');
     nextNumber++;
     showList();
     alert(`✅ Клиент #${newClient.number} добавлен!`);
@@ -190,13 +252,13 @@ function showList() {
     if(!filtered.length) { document.getElementById('content').innerHTML = '<div class="card empty-state">📭 Нет клиентов</div>'; return; }
     let html = '';
     for(let c of filtered) {
-        let cls = c.status === 'Новый' ? 'status-new' : (c.status === 'В работе' ? 'status-work' : (c.status === 'Договор' ? 'status-deal' : 'status-closed'));
+        let cls = c.status === 'Новый' ? 'status-new' : (c.status === 'В работе' ? 'status-work' : (c.status === 'Договор' ? 'status-deal' : (c.status === 'Закрыт' ? 'status-closed' : 'status-rejected')));
         html += `<div class="client-card" onclick="view(${c.number})">
             <div class="client-number">#${formatNumber(c.number)}</div>
             <div class="client-name">${c.name}</div>
             <div class="client-info">📞 ${c.phone} | 📐 ${c.area} м²</div>
             <div><span class="status-badge ${cls}">${c.status}</span></div>
-            ${c.status === 'Договор' && c.price !== '—' ? `<div class="price-badge">💰 ${formatPrice(c.price)}</div>` : ''}
+            ${c.status === 'Договор' && c.priceSum !== '—' ? `<div class="price-badge">💰 ${formatPrice(c.priceSum)}</div>` : ''}
         </div>`;
     }
     document.getElementById('content').innerHTML = html;
@@ -206,8 +268,9 @@ function view(n) {
     let c = clients.find(x=>x.number===n);
     if(!c) { showList(); return; }
     
-    let cls = c.status === 'Новый' ? 'status-new' : (c.status === 'В работе' ? 'status-work' : (c.status === 'Договор' ? 'status-deal' : 'status-closed'));
+    let cls = c.status === 'Новый' ? 'status-new' : (c.status === 'В работе' ? 'status-work' : (c.status === 'Договор' ? 'status-deal' : (c.status === 'Закрыт' ? 'status-closed' : 'status-rejected')));
     let isDealLocked = c.status === 'Договор' && c.dealSigned;
+    let isRejectedOrClosed = c.status === 'Закрыт' || c.status === 'Отказ';
     
     let filesHtml = '';
     if(c.files && c.files.length) {
@@ -223,30 +286,44 @@ function view(n) {
         dealFilesHtml += '</div>';
     }
     
-    // ПОЛЯ ДЛЯ ПОДПИСАНИЯ ДОГОВОРА - появляются только при статусе "Договор"
     let dealSection = '';
     if(c.status === 'Договор' && !c.dealSigned) {
         dealSection = `<div class="deal-section">
-            <div class="input-group"><label>💰 Сумма договора (сум)</label><input id="dealPrice" type="number" placeholder="Введите сумму"></div>
-            <div class="input-group"><label>📄 Файл договора (PDF, DOC)</label><input type="file" id="dealFile" accept=".pdf,.doc,.docx"></div>
+            <div class="currency-input-group">
+                <input id="dealPrice" type="number" placeholder="Сумма">
+                <select id="dealCurrency">
+                    <option value="sum">🇺🇿 Сум</option>
+                    <option value="usd">🇺🇸 USD</option>
+                </select>
+            </div>
+            <div class="input-group"><label>📄 Файл договора</label><input type="file" id="dealFile" accept=".pdf,.doc,.docx"></div>
             <button class="save-btn" onclick="signDeal(${n})">✅ Подписать договор</button>
         </div>`;
     } else if(c.status === 'Договор' && c.dealSigned) {
         dealSection = `<div class="deal-section" style="border-color:#66ff88;">
             <label style="color:#66ff88;">✅ ДОГОВОР ПОДПИСАН</label>
-            <p style="color:#ffd700;">💰 Сумма: ${formatPrice(c.price)}</p>
+            <p style="color:#ffd700;">💰 Сумма: ${formatPrice(c.priceSum)}</p>
         </div>`;
     }
     
-    let statusSelect = '';
-    if(isDealLocked) {
-        statusSelect = `<div class="deal-section" style="color:#ff6666;">🔒 Договор подписан — статус нельзя изменить</div>`;
+    let statusOptions = '';
+    if(c.status === 'Договор' && c.dealSigned) {
+        // Договор можно изменить только на Закрыт или Отказ
+        statusOptions = `<select id="ns">
+            <option ${c.status==='Договор' ? 'selected' : ''}>Договор</option>
+            <option>Закрыт</option>
+            <option>Отказ</option>
+        </select>
+        <button class="save-btn" onclick="changeStatus(${n})">🔄 Изменить статус</button>`;
+    } else if(isRejectedOrClosed) {
+        statusOptions = `<div class="deal-section" style="color:#ff6666;">🔒 Статус "${c.status}" — изменение недоступно</div>`;
     } else {
-        statusSelect = `<select id="ns">
+        statusOptions = `<select id="ns">
             <option ${c.status==='Новый' ? 'selected' : ''}>Новый</option>
             <option ${c.status==='В работе' ? 'selected' : ''}>В работе</option>
             <option ${c.status==='Договор' ? 'selected' : ''}>Договор</option>
             <option ${c.status==='Закрыт' ? 'selected' : ''}>Закрыт</option>
+            <option ${c.status==='Отказ' ? 'selected' : ''}>Отказ</option>
         </select>
         <button class="save-btn" onclick="changeStatus(${n})">🔄 Изменить статус</button>`;
     }
@@ -258,14 +335,15 @@ function view(n) {
         <p>📐 ${c.area} м²</p>
         <p>📍 ${c.address}</p>
         <p><span class="status-badge ${cls}">${c.status}</span></p>
+        ${c.priceSum !== '—' ? `<p>💰 ${formatPrice(c.priceSum)}</p>` : ''}
         <p>💬 ${c.comment}</p>
         <p>🕐 ${c.time}</p>
         ${filesHtml}${dealFilesHtml}
         ${dealSection}
         <div class="input-group"><label>📎 Добавить файл</label><input type="file" id="newFile" accept=".pdf,.doc,.docx,.jpg,.png"></div>
         <button class="upload-btn" onclick="addFile(${n})">📤 Добавить файл</button>
-        ${statusSelect}
-        ${!isDealLocked ? `<button class="upload-btn" style="background:#4a1a1a;color:#ff8888;margin-top:10px;" onclick="deleteClient(${n})">🗑️ Удалить клиента</button>` : ''}
+        ${statusOptions}
+        ${!isDealLocked && !isRejectedOrClosed ? `<button class="upload-btn" style="background:#4a1a1a;color:#ff8888;margin-top:10px;" onclick="deleteClient(${n})">🗑️ Удалить клиента</button>` : ''}
         <button class="upload-btn" style="background:#2a2a2a;margin-top:10px;" onclick="showList()">◀️ Назад</button>
     </div>`;
 }
@@ -273,6 +351,7 @@ function view(n) {
 async function signDeal(n) {
     let c = clients.find(x=>x.number===n);
     let price = document.getElementById('dealPrice').value;
+    let currency = document.getElementById('dealCurrency').value;
     let file = document.getElementById('dealFile').files[0];
     
     if(!price && !file) { 
@@ -280,7 +359,14 @@ async function signDeal(n) {
         return; 
     }
     
-    if(price) c.price = price;
+    if(price) {
+        let priceNum = parseFloat(price);
+        if(currency === 'usd') {
+            c.priceSum = (priceNum * usdRate).toString();
+        } else {
+            c.priceSum = priceNum.toString();
+        }
+    }
     
     if(file) {
         let reader = new FileReader();
@@ -293,11 +379,8 @@ async function signDeal(n) {
     
     c.dealSigned = true;
     save();
-    
-    // Отправляем карточку с договором
     await sendFullCardToGroup(c, 'deal');
-    
-    alert(`✅ Договор подписан! Сумма: ${formatPrice(c.price)}`);
+    alert(`✅ Договор подписан! Сумма: ${formatPrice(c.priceSum)}`);
     view(n);
 }
 
@@ -308,12 +391,16 @@ async function changeStatus(n) {
     
     if(oldStatus === newStatus) { view(n); return; }
     
+    // Проверка: если статус Договор и подписан, можно менять только на Закрыт или Отказ
+    if(oldStatus === 'Договор' && c.dealSigned && newStatus !== 'Закрыт' && newStatus !== 'Отказ') {
+        alert('❌ Подписанный договор можно изменить только на статус "Закрыт" или "Отказ"');
+        view(n);
+        return;
+    }
+    
     c.status = newStatus;
     save();
-    
-    // Отправляем обновлённую карточку
     await sendFullCardToGroup(c, 'status');
-    
     alert(`✅ Статус изменён с "${oldStatus}" на "${newStatus}"!`);
     
     if(newStatus === 'Договор') {
@@ -334,7 +421,6 @@ async function addFile(n) {
     if(!c.files) c.files = [];
     c.files.push(fileData);
     save();
-    
     await sendFileToGroup(fileData, c, 'file');
     alert(`✅ Файл добавлен и отправлен в группу!`);
     view(n);
@@ -366,15 +452,27 @@ function deleteClient(n) {
 
 function showStats() {
     let total = clients.length, areaTotal = 0, priceTotal = 0;
+    let newC = 0, workC = 0, dealC = 0, closedC = 0, rejectC = 0;
     clients.forEach(c => { 
         areaTotal += parseFloat(c.area) || 0; 
-        if(c.price && c.price !== '—') priceTotal += parseFloat(c.price) || 0; 
+        if(c.priceSum !== '—') priceTotal += parseFloat(c.priceSum) || 0;
+        if(c.status === 'Новый') newC++;
+        else if(c.status === 'В работе') workC++;
+        else if(c.status === 'Договор') dealC++;
+        else if(c.status === 'Закрыт') closedC++;
+        else if(c.status === 'Отказ') rejectC++;
     });
     document.getElementById('content').innerHTML = `<div class="card"><h3 style="text-align:center;color:#ffd700;">📊 СТАТИСТИКА</h3>
         <p>👥 Всего клиентов: <b style="color:#ffd700;">${total}</b></p>
         <p>📐 Общая площадь: <b>${areaTotal} м²</b></p>
-        <p>💰 Общая сумма договоров: <b style="color:#ffd700;">${formatPrice(priceTotal)}</b></p>
-        <button class="save-btn" style="background:#2a2a2a;color:white;" onclick="showList()">◀️ Назад</button></div>`;
+        <p>💰 Общая сумма: <b style="color:#ffd700;">${formatPrice(priceTotal)}</b></p>
+        <hr>
+        <p>🟢 Новые: ${newC}</p>
+        <p>🟡 В работе: ${workC}</p>
+        <p>🔵 Договор: ${dealC}</p>
+        <p>✅ Закрыты: ${closedC}</p>
+        <p>❌ Отказ: ${rejectC}</p>
+        <button class="save-btn" style="background:#2a2a2a;color:white;margin-top:20px;" onclick="showList()">◀️ Назад</button></div>`;
 }
 
 load(); 
