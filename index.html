@@ -50,8 +50,16 @@
         <div id="content"></div>
     </div>
     <script>
+        // Загружаем данные, но удаляем старые (без полей area, address, comment)
         let clients = JSON.parse(localStorage.getItem('clients') || '[]');
+        // Фильтруем: оставляем только клиентов с новыми полями
+        clients = clients.filter(c => c.area !== undefined && c.address !== undefined && c.comment !== undefined);
         let nextNumber = parseInt(localStorage.getItem('nextNumber') || '1');
+        if(clients.length > 0) {
+            let maxNumber = Math.max(...clients.map(c => c.number));
+            if(nextNumber <= maxNumber) nextNumber = maxNumber + 1;
+        }
+        save();
         
         function save() { 
             localStorage.setItem('clients', JSON.stringify(clients)); 
