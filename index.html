@@ -27,7 +27,6 @@
         .menu-btn { flex: 1; background: #1a1a1a; border: none; padding: 14px; border-radius: 16px; color: white; cursor: pointer; }
         .menu-btn.add { background: #ffd700; color: #111; }
         
-        /* ПЛАВАЮЩАЯ КНОПКА БЫСТРОГО ДОБАВЛЕНИЯ */
         .fab {
             position: fixed;
             bottom: 30px;
@@ -41,14 +40,12 @@
             justify-content: center;
             cursor: pointer;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            transition: all 0.3s;
             z-index: 1000;
             border: none;
         }
         .fab:active { transform: scale(0.95); }
         .fab span { font-size: 32px; font-weight: bold; color: #111; }
         
-        /* Модальное окно быстрого добавления */
         .modal {
             display: none;
             position: fixed;
@@ -81,20 +78,14 @@
             border-bottom: 1px solid #333;
             padding-bottom: 15px;
         }
-        .modal-header h3 { color: #ffd700; font-size: 20px; }
-        .close-modal {
-            background: none;
-            border: none;
-            font-size: 28px;
-            cursor: pointer;
-            color: #aaa;
-        }
+        .modal-header h3 { color: #ffd700; }
+        .close-modal { background: none; border: none; font-size: 28px; cursor: pointer; color: #aaa; }
         .card { background: #111; border-radius: 24px; padding: 20px; margin-bottom: 12px; border: 1px solid #333; }
         .client-card { background: #111; border-radius: 20px; padding: 16px; margin-bottom: 12px; cursor: pointer; border-left: 4px solid #ffd700; }
         .client-name { font-size: 18px; font-weight: bold; color: #fff; }
         .client-number { background: #ffd700; color: #111; border-radius: 20px; padding: 4px 12px; font-size: 12px; display: inline-block; }
         .client-info { font-size: 14px; color: #ccc; margin-top: 8px; }
-        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; }
+        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
         .status-new { background: #1a3a5c; color: #66ccff; }
         .status-work { background: #5c3a1a; color: #ffcc66; }
         .status-deal { background: #1a5c2a; color: #66ff88; }
@@ -107,16 +98,17 @@
         .file-list { margin-top: 10px; padding: 10px; background: #1a1a1a; border-radius: 12px; }
         .file-item { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #333; }
         .file-name { color: #ffd700; font-size: 12px; }
+        .delete-file { background: none; border: none; color: #ff6666; cursor: pointer; }
         .price-badge { background: #ffd700; color: #111; border-radius: 20px; padding: 4px 12px; font-size: 12px; display: inline-block; margin-top: 8px; }
         .empty-state { text-align: center; padding: 40px; color: #888; }
-        .number-badge { background: #ffd700; color: #111; border-radius: 30px; padding: 8px 16px; display: inline-block; margin-bottom: 20px; }
+        .number-badge { background: #ffd700; color: #111; border-radius: 30px; padding: 8px 16px; display: inline-block; margin-bottom: 20px; font-weight: bold; }
         hr { border-color: #333; margin: 20px 0; }
         p, h3 { color: #fff; }
         .deal-section { border-top: 1px solid #333; margin-top: 15px; padding-top: 15px; }
         .profit-total { background: #1a3a1a; border-radius: 16px; padding: 12px; text-align: center; margin-top: 10px; }
         .chart-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
         .chart-label { width: 90px; color: #ccc; }
-        .chart-fill { height: 30px; border-radius: 15px; background: #ffd700; display: flex; align-items: center; justify-content: flex-end; padding-right: 10px; color: #111; font-weight: bold; font-size: 12px; }
+        .chart-fill { height: 30px; border-radius: 15px; display: flex; align-items: center; justify-content: flex-end; padding-right: 10px; color: #111; font-weight: bold; font-size: 12px; }
         .quick-form-row { display: flex; gap: 10px; margin-bottom: 15px; }
         .quick-form-row .input-group { flex: 1; margin-bottom: 0; }
         .success-toast {
@@ -130,8 +122,6 @@
             text-align: center;
             color: #66ff88;
             z-index: 1002;
-            transition: all 0.3s;
-            border: 1px solid #66ff88;
         }
     </style>
 </head>
@@ -143,14 +133,8 @@
     </div>
     
     <div class="currency-bar">
-        <div>
-            <button class="currency-btn" id="currencySum" onclick="setCurrency('sum')">🇺🇿 Сум</button>
-            <button class="currency-btn" id="currencyUsd" onclick="setCurrency('usd')">🇺🇸 USD</button>
-        </div>
-        <div class="rate-info">
-            1$ = <span id="rateValue">12800</span> сум
-            <button class="edit-rate" onclick="editRate()">✏️</button>
-        </div>
+        <div><button class="currency-btn" id="currencySum" onclick="setCurrency('sum')">🇺🇿 Сум</button><button class="currency-btn" id="currencyUsd" onclick="setCurrency('usd')">🇺🇸 USD</button></div>
+        <div class="rate-info">1$ = <span id="rateValue">12800</span> сум <button class="edit-rate" onclick="editRate()">✏️</button></div>
     </div>
     
     <div class="filter-buttons">
@@ -168,34 +152,18 @@
     <div id="content"></div>
 </div>
 
-<!-- ПЛАВАЮЩАЯ КНОПКА + МОДАЛЬНОЕ ОКНО -->
 <button class="fab" onclick="openQuickForm()"><span>+</span></button>
 
 <div id="quickModal" class="modal">
     <div class="modal-content">
-        <div class="modal-header">
-            <h3>⚡ Быстрое добавление</h3>
-            <button class="close-modal" onclick="closeQuickForm()">✕</button>
-        </div>
+        <div class="modal-header"><h3>⚡ Быстрое добавление</h3><button class="close-modal" onclick="closeQuickForm()">✕</button></div>
         <div class="number-badge" id="quickNumber">Новый клиент → #1</div>
-        
         <div class="input-group"><label>📛 Имя *</label><input id="quickName" placeholder="Ислом Каримов" autofocus></div>
-        <div class="quick-form-row">
-            <div class="input-group"><label>📞 Телефон</label><input id="quickPhone" placeholder="+998 90 123 45 67"></div>
-            <div class="input-group"><label>📐 Площадь</label><input id="quickArea" placeholder="75" type="number"></div>
-        </div>
+        <div class="quick-form-row"><div class="input-group"><label>📞 Телефон</label><input id="quickPhone" placeholder="+998 90 123 45 67"></div><div class="input-group"><label>📐 Площадь</label><input id="quickArea" placeholder="75" type="number"></div></div>
         <div class="input-group"><label>📍 Адрес</label><input id="quickAddress" placeholder="ул. Навои, 15"></div>
-        <div class="quick-form-row">
-            <div class="input-group"><label>📌 Статус</label>
-                <select id="quickStatus">
-                    <option value="Новый">🟢 Новый</option>
-                    <option value="В работе">🟡 В работе</option>
-                </select>
-            </div>
-        </div>
+        <div class="quick-form-row"><div class="input-group"><label>📌 Статус</label><select id="quickStatus"><option value="Новый">🟢 Новый</option><option value="В работе">🟡 В работе</option></select></div></div>
         <div class="input-group"><label>💬 Комментарий</label><textarea id="quickComment" rows="2" placeholder="Дополнительная информация..."></textarea></div>
-        <div class="input-group"><label>📎 Файлы</label><input type="file" id="quickFiles" multiple accept=".pdf,.doc,.docx,.jpg,.png"></div>
-        
+        <div class="input-group"><label>📎 Файлы</label><input type="file" id="quickFiles" multiple accept=".pdf,.doc,.docx,.jpg,.png,.mp3,.m4a,.ogg,.wav"></div>
         <button class="save-btn" onclick="quickAdd()">✅ Добавить клиента</button>
     </div>
 </div>
@@ -203,7 +171,6 @@
 <div id="toast" style="display:none;" class="success-toast"></div>
 
 <script>
-// ========== ОСНОВНЫЕ ПЕРЕМЕННЫЕ ==========
 let clients = [], nextNumber = 1, currentFilter = 'all';
 let currentCurrency = 'sum', usdRate = 12800;
 
@@ -211,46 +178,23 @@ function formatNumber(num) { return num.toString().replace(/\B(?=(\d{3})+(?!\d))
 function formatPrice(priceSum) {
     if(!priceSum || priceSum === '—') return '—';
     let num = parseFloat(priceSum);
-    if(currentCurrency === 'usd') {
-        let usd = num / usdRate;
-        return usd.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " $";
-    } else {
-        return num.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " сум";
-    }
+    if(currentCurrency === 'usd') return (num / usdRate).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " $";
+    return num.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " сум";
 }
 
-// Валюты
-function loadCurrency() {
-    let saved = localStorage.getItem('currency');
-    if(saved) currentCurrency = saved;
-    let savedRate = localStorage.getItem('usdRate');
-    if(savedRate) usdRate = parseFloat(savedRate);
-    updateCurrencyUI();
-}
+function loadCurrency() { let s = localStorage.getItem('currency'); if(s) currentCurrency = s; let r = localStorage.getItem('usdRate'); if(r) usdRate = parseFloat(r); updateCurrencyUI(); }
 function saveCurrency() { localStorage.setItem('currency', currentCurrency); localStorage.setItem('usdRate', usdRate); }
 function setCurrency(curr) { currentCurrency = curr; saveCurrency(); updateCurrencyUI(); showList(); showStats(); }
 function updateCurrencyUI() {
-    let sumBtn = document.getElementById('currencySum'), usdBtn = document.getElementById('currencyUsd');
-    if(sumBtn) sumBtn.classList.toggle('active', currentCurrency === 'sum');
-    if(usdBtn) usdBtn.classList.toggle('active', currentCurrency === 'usd');
-    let rateSpan = document.getElementById('rateValue');
-    if(rateSpan) rateSpan.innerText = usdRate;
+    document.getElementById('currencySum').classList.toggle('active', currentCurrency === 'sum');
+    document.getElementById('currencyUsd').classList.toggle('active', currentCurrency === 'usd');
+    document.getElementById('rateValue').innerText = usdRate;
 }
-function editRate() {
-    let newRate = prompt('Введите курс доллара (сум за 1$):', usdRate);
-    if(newRate && !isNaN(newRate)) { usdRate = parseFloat(newRate); saveCurrency(); document.getElementById('rateValue').innerText = usdRate; showList(); showStats(); }
-}
+function editRate() { let r = prompt('Курс доллара:', usdRate); if(r && !isNaN(r)) { usdRate = parseFloat(r); saveCurrency(); updateCurrencyUI(); showList(); showStats(); } }
 
-// Загрузка/сохранение данных
-function load() { 
-    let s = localStorage.getItem('clients'); if(s) clients = JSON.parse(s); 
-    let n = localStorage.getItem('nextNumber'); if(n) nextNumber = parseInt(n); 
-    loadCurrency();
-    updateQuickNumber();
-}
+function load() { let s = localStorage.getItem('clients'); if(s) clients = JSON.parse(s); let n = localStorage.getItem('nextNumber'); if(n) nextNumber = parseInt(n); loadCurrency(); updateQuickNumber(); }
 function save() { localStorage.setItem('clients', JSON.stringify(clients)); localStorage.setItem('nextNumber', nextNumber); }
 
-// Отправка в Telegram
 const CHAT_ID = -1003831665624;
 const BOT_TOKEN = "8628159718:AAH8tPnTX0fReDzpByMG44A-iF6HG-Pm5-8";
 
@@ -262,6 +206,7 @@ async function sendToGroup(c, eventType = 'new') {
     let url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(message)}`;
     try { await fetch(url); } catch(e) { console.log(e); }
 }
+
 async function sendFileToGroup(fileData, clientNumber, clientName) {
     try {
         let byteChars = atob(fileData.data.split(',')[1]);
@@ -276,28 +221,14 @@ async function sendFileToGroup(fileData, clientNumber, clientName) {
     } catch(e) { console.log(e); }
 }
 
-// БЫСТРОЕ ДОБАВЛЕНИЕ
-function updateQuickNumber() {
-    let badge = document.getElementById('quickNumber');
-    if(badge) badge.innerHTML = `Новый клиент → #${formatNumber(nextNumber)}`;
-}
-function openQuickForm() {
-    document.getElementById('quickModal').classList.add('show');
-    document.getElementById('quickName').focus();
-    updateQuickNumber();
-}
+function updateQuickNumber() { let badge = document.getElementById('quickNumber'); if(badge) badge.innerHTML = `Новый клиент → #${formatNumber(nextNumber)}`; }
+function openQuickForm() { document.getElementById('quickModal').classList.add('show'); document.getElementById('quickName').focus(); updateQuickNumber(); }
 function closeQuickForm() { document.getElementById('quickModal').classList.remove('show'); }
-function showToast(msg) {
-    let toast = document.getElementById('toast');
-    toast.innerHTML = msg;
-    toast.style.display = 'block';
-    setTimeout(() => { toast.style.display = 'none'; }, 3000);
-}
+function showToast(msg) { let t = document.getElementById('toast'); t.innerHTML = msg; t.style.display = 'block'; setTimeout(() => { t.style.display = 'none'; }, 3000); }
 
 async function quickAdd() {
     let name = document.getElementById('quickName').value;
-    if(!name) { alert('Введите имя клиента'); return; }
-    
+    if(!name) { alert('Введите имя'); return; }
     let files = document.getElementById('quickFiles').files;
     let fileDataArray = [];
     for(let f of files) {
@@ -305,32 +236,18 @@ async function quickAdd() {
         let data = await new Promise(r => { reader.onload = e => r(e.target.result); reader.readAsDataURL(f); });
         fileDataArray.push({name: f.name, type: f.type, data: data});
     }
-    
     let newClient = {
-        number: nextNumber,
-        name: name,
-        phone: document.getElementById('quickPhone').value || '—',
-        area: document.getElementById('quickArea').value || '—',
-        address: document.getElementById('quickAddress').value || '—',
-        status: document.getElementById('quickStatus').value,
-        priceSum: '—',
-        comment: document.getElementById('quickComment').value || '—',
-        time: new Date().toLocaleString('ru-RU'),
-        files: fileDataArray,
-        dealFiles: [],
-        dealSigned: false
+        number: nextNumber, name: name, phone: document.getElementById('quickPhone').value || '—',
+        area: document.getElementById('quickArea').value || '—', address: document.getElementById('quickAddress').value || '—',
+        status: document.getElementById('quickStatus').value, priceSum: '—', comment: document.getElementById('quickComment').value || '—',
+        time: new Date().toLocaleString('ru-RU'), files: fileDataArray, dealFiles: [], dealSigned: false
     };
-    
-    clients.push(newClient);
-    save();
+    clients.push(newClient); save();
     await sendToGroup(newClient, 'new');
     for(let f of fileDataArray) await sendFileToGroup(f, newClient.number, newClient.name);
-    nextNumber++;
-    save();
-    
+    nextNumber++; save();
     closeQuickForm();
     showToast(`✅ Клиент #${formatNumber(newClient.number)} добавлен!`);
-    
     document.getElementById('quickName').value = '';
     document.getElementById('quickPhone').value = '';
     document.getElementById('quickArea').value = '';
@@ -338,11 +255,9 @@ async function quickAdd() {
     document.getElementById('quickComment').value = '';
     document.getElementById('quickFiles').value = '';
     updateQuickNumber();
-    
     if(currentFilter === 'all' || currentFilter === newClient.status) showList();
 }
 
-// ФИЛЬТРЫ И ОТОБРАЖЕНИЕ
 function setFilter(s) { currentFilter = s; document.querySelectorAll('.filter-btn').forEach((btn,i)=>btn.classList.toggle('active', btn.innerText === s || (s==='all' && btn.innerText==='Все'))); showList(); }
 function getFiltered() { return currentFilter === 'all' ? clients : clients.filter(c => c.status === currentFilter); }
 
@@ -363,36 +278,54 @@ function showList() {
     document.getElementById('content').innerHTML = html;
 }
 
+async function changeClientStatus(number, newStatus) {
+    let c = clients.find(x => x.number === number);
+    if(!c) return;
+    let oldStatus = c.status;
+    if(oldStatus === newStatus) return;
+    c.status = newStatus;
+    save();
+    await sendToGroup(c, 'status');
+    showToast(`✅ Статус клиента #${c.number} изменён с "${oldStatus}" на "${newStatus}"`);
+    showList();
+}
+
 function viewClient(n) {
     let c = clients.find(x=>x.number===n);
     if(!c) { showList(); return; }
     let cls = c.status === 'Новый' ? 'status-new' : (c.status === 'В работе' ? 'status-work' : (c.status === 'Договор' ? 'status-deal' : 'status-closed'));
     document.getElementById('content').innerHTML = `<div class="card">
         <div class="number-badge">Клиент #${formatNumber(c.number)}</div>
-        <h3>${c.name}</h3><p>📞 ${c.phone}</p><p>📐 ${c.area} м²</p><p>📍 ${c.address}</p>
-        <p><span class="status-badge ${cls}">${c.status}</span></p>
+        <h3>${c.name}</h3>
+        <p>📞 ${c.phone}</p><p>📐 ${c.area} м²</p><p>📍 ${c.address}</p>
+        <p><span class="status-badge ${cls}" style="font-size:16px;padding:8px 16px;">${c.status}</span></p>
         <p>💬 ${c.comment}</p><p>🕐 ${c.time}</p>
+        <div class="input-group"><label>📌 Изменить статус</label>
+        <select id="statusSelect">
+            <option ${c.status==='Новый' ? 'selected' : ''}>Новый</option>
+            <option ${c.status==='В работе' ? 'selected' : ''}>В работе</option>
+            <option ${c.status==='Договор' ? 'selected' : ''}>Договор</option>
+            <option ${c.status==='Закрыт' ? 'selected' : ''}>Закрыт</option>
+        </select>
+        </div>
+        <button class="save-btn" onclick="changeClientStatus(${c.number}, document.getElementById('statusSelect').value)">🔄 Изменить статус</button>
         <button class="upload-btn" style="background:#2a2a2a;margin-top:10px;" onclick="showList()">◀️ Назад</button>
     </div>`;
 }
 
 function showStats() {
-    let total = clients.length, areaTotal = 0, totalProfit = 0;
-    let newC = 0, workC = 0, dealC = 0, closedC = 0;
+    let total = clients.length, areaTotal = 0, totalProfit = 0, newC=0, workC=0, dealC=0, closedC=0;
     clients.forEach(c => {
         areaTotal += parseFloat(c.area) || 0;
         if(c.status === 'Новый') newC++;
         else if(c.status === 'В работе') workC++;
         else if(c.status === 'Договор') dealC++;
-        else if(c.status === 'Закрыт') {
-            closedC++;
-            if(c.priceSum !== '—') totalProfit += parseFloat(c.priceSum) || 0;
-        }
+        else if(c.status === 'Закрыт') { closedC++; if(c.priceSum !== '—') totalProfit += parseFloat(c.priceSum) || 0; }
     });
     let maxCount = Math.max(newC, workC, dealC, closedC, 1);
     document.getElementById('content').innerHTML = `<div class="card">
         <h3 style="text-align:center;color:#ffd700;">📊 СТАТИСТИКА</h3>
-        <div class="profit-total"><label>💰 ОБЩАЯ ПРИБЫЛЬ</label><div class="value" style="font-size:28px;font-weight:bold;color:#66ff88;">${formatPrice(totalProfit)}</div></div>
+        <div class="profit-total"><label>💰 ОБЩАЯ ПРИБЫЛЬ</label><div style="font-size:28px;font-weight:bold;color:#66ff88;">${formatPrice(totalProfit)}</div></div>
         <p>👥 Всего: <b style="color:#ffd700;">${total}</b> | 📐 Площадь: <b>${areaTotal} м²</b></p>
         <div class="chart-bar"><span class="chart-label">🟢 Новые</span><div class="chart-fill" style="width:${(newC/maxCount)*100}%;background:#66ccff;"> ${newC}</div></div>
         <div class="chart-bar"><span class="chart-label">🟡 В работе</span><div class="chart-fill" style="width:${(workC/maxCount)*100}%;background:#ffcc66;"> ${workC}</div></div>
