@@ -161,7 +161,7 @@
         <div class="input-group"><label>📛 Имя *</label><input id="quickName" placeholder="Ислом Каримов" autofocus></div>
         <div class="quick-form-row"><div class="input-group"><label>📞 Телефон</label><input id="quickPhone" placeholder="+998 90 123 45 67"></div><div class="input-group"><label>📐 Площадь</label><input id="quickArea" placeholder="75" type="number"></div></div>
         <div class="input-group"><label>📍 Адрес</label><input id="quickAddress" placeholder="ул. Навои, 15"></div>
-        <div class="quick-form-row"><div class="input-group"><label>📌 Статус</label><select id="quickStatus"><option value="Новый">🟢 Новый</option><option value="В работе">🟡 В работе</option></select></div></div>
+        <div class="quick-form-row"><div class="input-group"><label>📌 Статус</label><select id="quickStatus"><option value="Новый">🟢 Новый</option><option value="В работе">🟡 В работе</option><option value="Договор">🔵 Договор</option></select></div></div>
         <div class="input-group"><label>💬 Комментарий</label><textarea id="quickComment" rows="2" placeholder="Дополнительная информация..."></textarea></div>
         <div class="input-group"><label>📎 Файлы</label><input type="file" id="quickFiles" multiple accept=".pdf,.doc,.docx,.jpg,.png,.mp3,.m4a,.ogg,.wav"></div>
         <button class="save-btn" onclick="quickAdd()">✅ Добавить клиента</button>
@@ -199,7 +199,7 @@ const CHAT_ID = -1003831665624;
 const BOT_TOKEN = "8628159718:AAH8tPnTX0fReDzpByMG44A-iF6HG-Pm5-8";
 
 async function sendToGroup(c, eventType = 'new') {
-    let title = eventType === 'new' ? `🆕 НОВЫЙ КЛИЕНТ #${c.number}` : `🔄 ИЗМЕНЕНИЕ СТАТУСА`;
+    let title = eventType === 'new' ? `🆕 НОВЫЙ КЛИЕНТ #${c.number}` : (eventType === 'status' ? `🔄 ИЗМЕНЕНИЕ СТАТУСА` : `✅ ПОДПИСАН ДОГОВОР #${c.number}`);
     let message = `${title}\n\n📛 Имя: ${c.name}\n📞 Телефон: ${c.phone}\n📐 Площадь: ${c.area} м²\n📍 Адрес: ${c.address}\n📌 Статус: ${c.status}`;
     if(c.priceSum && c.priceSum !== '—') message += `\n💰 Сумма: ${formatPrice(c.priceSum)}`;
     message += `\n💬 Комментарий: ${c.comment}\n\n🕐 ${new Date().toLocaleString()}`;
@@ -283,6 +283,14 @@ async function changeClientStatus(number, newStatus) {
     if(!c) return;
     let oldStatus = c.status;
     if(oldStatus === newStatus) return;
+    
+    // Если статус Договор и уже подписан - можно менять только на Закрыт
+    if(oldStatus === 'Договор' && c.dealSigned && newStatus !== 'Закрыт') {
+        showToast(`❌ Договор подписан! Можно изменить только на "Закрыт"`);
+        viewClient(number);
+        return;
+    }
+    
     c.status = newStatus;
     save();
     await sendToGroup(c, 'status');
@@ -294,23 +302,68 @@ function viewClient(n) {
     let c = clients.find(x=>x.number===n);
     if(!c) { showList(); return; }
     let cls = c.status === 'Новый' ? 'status-new' : (c.status === 'В работе' ? 'status-work' : (c.status === 'Договор' ? 'status-deal' : 'status-closed'));
+    let isSigned = c.status === 'Договор' && c.dealSigned;
+    
+    let statusOptions = '';
+    if(c.status === 'Договор' && c.dealSigned) {
+        statusOptions = `<select id="statusSelect">
+            <option ${c.status==='Договор' ? 'selected' : ''}>Договор</option>
+            <option ${c.status==='Закрыт' ? 'selected' : ''}>Закрыт</option>
+        </select>`;
+    } else {
+        statusOptions = `<select id="statusSelect">
+            <option ${c.status==='Новый' ? 'selected' : ''}>Новый</option>
+            <option ${c.status==='В работе' ? 'selected' : ''}>В работе</option>
+            <option ${c.status==='Договор' ? 'selected' : ''}>Договор</option>
+            <option ${c.status==='Закрыт' ? 'selected' : ''}>Закрыт</option>
+        </select>`;
+    }
+    
+    let dealSection = '';
+    if(c.status === 'Договор' && !c.dealSigned) {
+        dealSection = `<div class="deal-section">
+            <div class="input-group"><label>💰 Сумма договора (сум)</label><input id="dealPrice" type="number" placeholder="Введите сумму"></div>
+            <div class="input-group"><label>📄 Файл договора</label><input type="file" id="dealFile" accept=".pdf,.doc,.docx"></div>
+            <button class="save-btn" onclick="signDeal(${c.number})">✅ Подписать договор</button>
+        </div>`;
+    } else if(c.status === 'Договор' && c.dealSigned) {
+        dealSection = `<div class="deal-section" style="border-color:#66ff88;"><label style="color:#66ff88;">✅ ДОГОВОР ПОДПИСАН</label><p style="color:#ffd700;">💰 Сумма: ${formatPrice(c.priceSum)}</p></div>`;
+    }
+    
     document.getElementById('content').innerHTML = `<div class="card">
         <div class="number-badge">Клиент #${formatNumber(c.number)}</div>
         <h3>${c.name}</h3>
         <p>📞 ${c.phone}</p><p>📐 ${c.area} м²</p><p>📍 ${c.address}</p>
         <p><span class="status-badge ${cls}" style="font-size:16px;padding:8px 16px;">${c.status}</span></p>
+        ${c.priceSum !== '—' ? `<p>💰 ${formatPrice(c.priceSum)}</p>` : ''}
         <p>💬 ${c.comment}</p><p>🕐 ${c.time}</p>
-        <div class="input-group"><label>📌 Изменить статус</label>
-        <select id="statusSelect">
-            <option ${c.status==='Новый' ? 'selected' : ''}>Новый</option>
-            <option ${c.status==='В работе' ? 'selected' : ''}>В работе</option>
-            <option ${c.status==='Договор' ? 'selected' : ''}>Договор</option>
-            <option ${c.status==='Закрыт' ? 'selected' : ''}>Закрыт</option>
-        </select>
-        </div>
+        ${dealSection}
+        <div class="input-group"><label>📌 Изменить статус</label>${statusOptions}</div>
         <button class="save-btn" onclick="changeClientStatus(${c.number}, document.getElementById('statusSelect').value)">🔄 Изменить статус</button>
         <button class="upload-btn" style="background:#2a2a2a;margin-top:10px;" onclick="showList()">◀️ Назад</button>
     </div>`;
+}
+
+async function signDeal(n) {
+    let c = clients.find(x=>x.number===n);
+    let price = document.getElementById('dealPrice').value;
+    let file = document.getElementById('dealFile').files[0];
+    
+    if(!price && !file) { alert('Введите сумму или прикрепите файл договора'); return; }
+    if(price) c.priceSum = price;
+    if(file) {
+        let reader = new FileReader();
+        let data = await new Promise(r => { reader.onload = e => r(e.target.result); reader.readAsDataURL(file); });
+        let fileData = {name: file.name, type: file.type, data: data};
+        if(!c.dealFiles) c.dealFiles = [];
+        c.dealFiles.push(fileData);
+        await sendFileToGroup(fileData, c.number, c.name);
+    }
+    c.dealSigned = true;
+    save();
+    await sendToGroup(c, 'deal');
+    showToast(`✅ Договор подписан! Сумма: ${formatPrice(c.priceSum)}`);
+    viewClient(n);
 }
 
 function showStats() {
