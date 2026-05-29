@@ -1,25 +1,251 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>CRM</title>
+    <title>CRM - Neostyle</title>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <style>
-        body { font-family: Arial; background: #f0f0f0; padding: 20px; text-align: center; }
-        button { background: blue; color: white; padding: 15px; margin: 10px; border: none; border-radius: 10px; cursor: pointer; width: 90%; font-size: 18px; }
-        .card { background: white; padding: 15px; border-radius: 15px; margin-bottom: 10px; text-align: left; }
-        input, select, textarea { width: 95%; padding: 10px; margin: 5px 0; font-size: 16px; border-radius: 8px; border: 1px solid #ccc; }
-        textarea { resize: vertical; font-family: Arial; }
-        .number { background: #667eea; color: white; border-radius: 20px; padding: 5px 12px; display: inline-block; margin-bottom: 10px; }
-        .label { font-weight: bold; margin-top: 10px; display: block; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* Главный контейнер */
+        .app-container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        /* Шапка */
+        .header {
+            background: rgba(255,255,255,0.95);
+            border-radius: 28px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        /* Кнопки меню */
+        .menu-buttons {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .menu-btn {
+            flex: 1;
+            background: white;
+            border: none;
+            padding: 14px;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .menu-btn:active {
+            transform: scale(0.96);
+        }
+
+        .menu-btn.add { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+        .menu-btn.list { background: white; color: #333; }
+        .menu-btn.stats { background: white; color: #333; }
+
+        /* Карточки */
+        .card {
+            background: white;
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .card:active {
+            transform: scale(0.98);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Поля ввода */
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 6px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 14px;
+            border: 1.5px solid #e0e0e0;
+            border-radius: 14px;
+            font-size: 16px;
+            transition: all 0.2s;
+            background: #f9f9f9;
+            font-family: inherit;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* Кнопка сохранения */
+        .save-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 16px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+            transition: all 0.2s;
+        }
+
+        .save-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Карточка клиента в списке */
+        .client-card {
+            background: white;
+            border-radius: 20px;
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .client-card:active {
+            transform: scale(0.98);
+            background: #f5f5f5;
+        }
+
+        .client-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .client-number {
+            background: #667eea;
+            color: white;
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 12px;
+            display: inline-block;
+            margin-bottom: 8px;
+        }
+
+        .client-info {
+            font-size: 14px;
+            color: #666;
+            margin-top: 8px;
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        /* Статусы */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-new { background: #e0f2fe; color: #0284c7; }
+        .status-work { background: #fef3c7; color: #d97706; }
+        .status-deal { background: #dcfce7; color: #16a34a; }
+        .status-closed { background: #f1f5f9; color: #475569; }
+
+        /* Пустое состояние */
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        /* Номер нового клиента */
+        .number-badge {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 30px;
+            padding: 8px 16px;
+            display: inline-block;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
-    <h1>🤖 CRM Бот</h1>
-    <button onclick="showAdd()">➕ Добавить</button>
-    <button onclick="showList()">📋 Список</button>
-    <button onclick="showStats()">📊 Статистика</button>
-    <div id="content"></div>
+    <div class="app-container">
+        <div class="header">
+            <h1>🤖 Neostyle CRM</h1>
+            <p>Управление клиентами</p>
+        </div>
+
+        <div class="menu-buttons">
+            <button class="menu-btn add" onclick="showAdd()">➕ Добавить</button>
+            <button class="menu-btn list" onclick="showList()">📋 Список</button>
+            <button class="menu-btn stats" onclick="showStats()">📊 Статистика</button>
+        </div>
+
+        <div id="content"></div>
+    </div>
+
     <script>
         let clients = [];
         let nextNumber = 1;
@@ -67,33 +293,44 @@
         function showAdd() {
             document.getElementById('content').innerHTML = `
                 <div class="card">
-                    <h3>➕ Новый клиент</h3>
-                    <p class="number">Будет номер: #${nextNumber}</p>
+                    <div class="number-badge">Новый клиент → #${nextNumber}</div>
                     
-                    <label class="label">📛 Имя клиента *</label>
-                    <input id="name" placeholder="Иван Петров">
+                    <div class="input-group">
+                        <label>📛 Имя клиента *</label>
+                        <input id="name" placeholder="Иван Петров">
+                    </div>
                     
-                    <label class="label">📞 Телефон</label>
-                    <input id="phone" placeholder="+7 999 123-45-67">
+                    <div class="input-group">
+                        <label>📞 Телефон</label>
+                        <input id="phone" placeholder="+7 999 123-45-67">
+                    </div>
                     
-                    <label class="label">📐 Площадь (м²)</label>
-                    <input id="area" placeholder="75" type="number">
+                    <div class="input-group">
+                        <label>📐 Площадь (м²)</label>
+                        <input id="area" placeholder="75" type="number">
+                    </div>
                     
-                    <label class="label">📍 Адрес объекта</label>
-                    <input id="address" placeholder="ул. Ленина, д. 10">
+                    <div class="input-group">
+                        <label>📍 Адрес объекта</label>
+                        <input id="address" placeholder="ул. Ленина, д. 10">
+                    </div>
                     
-                    <label class="label">📌 Статус</label>
-                    <select id="status">
-                        <option>Новый</option>
-                        <option>В работе</option>
-                        <option>Договор</option>
-                        <option>Закрыт</option>
-                    </select>
+                    <div class="input-group">
+                        <label>📌 Статус</label>
+                        <select id="status">
+                            <option>Новый</option>
+                            <option>В работе</option>
+                            <option>Договор</option>
+                            <option>Закрыт</option>
+                        </select>
+                    </div>
                     
-                    <label class="label">💬 Комментарий</label>
-                    <textarea id="comment" rows="3" placeholder="Дополнительная информация по клиенту..."></textarea>
+                    <div class="input-group">
+                        <label>💬 Комментарий</label>
+                        <textarea id="comment" rows="3" placeholder="Дополнительная информация..."></textarea>
+                    </div>
                     
-                    <button onclick="add()">✅ Сохранить и отправить</button>
+                    <button class="save-btn" onclick="add()">✅ Сохранить и отправить</button>
                 </div>
             `;
         }
@@ -122,43 +359,90 @@
         
         function showList() {
             if(clients.length === 0) { 
-                document.getElementById('content').innerHTML = '<div class="card">📭 Нет клиентов</div>'; 
+                document.getElementById('content').innerHTML = '<div class="card empty-state">📭 Нет клиентов<br><br>Нажмите «Добавить»</div>'; 
                 return; 
             }
+            
             let html = '';
             for(let c of clients) {
-                html += '<div class="card">' +
-                    '<b>#' + c.number + ' - ' + c.name + '</b><br>' +
-                    '📞 ' + c.phone + '<br>' +
-                    '📐 ' + c.area + ' м²<br>' +
-                    '📍 ' + c.address + '<br>' +
-                    '📌 ' + c.status + '<br>' +
-                    '<button onclick="view(' + c.number + ')">👤 Подробнее</button>' +
-                    '</div>';
+                let statusClass = '';
+                if(c.status === 'Новый') statusClass = 'status-new';
+                else if(c.status === 'В работе') statusClass = 'status-work';
+                else if(c.status === 'Договор') statusClass = 'status-deal';
+                else statusClass = 'status-closed';
+                
+                html += `
+                    <div class="client-card" onclick="view(${c.number})">
+                        <div class="client-number">#${c.number}</div>
+                        <div class="client-name">${c.name}</div>
+                        <div class="client-info">
+                            <span>📞 ${c.phone}</span>
+                            <span>📐 ${c.area} м²</span>
+                        </div>
+                        <div style="margin-top: 8px;">
+                            <span class="status-badge ${statusClass}">${c.status}</span>
+                        </div>
+                    </div>
+                `;
             }
             document.getElementById('content').innerHTML = html;
         }
         
         function view(number) {
             let c = clients.find(x => x.number === number);
+            let statusClass = '';
+            if(c.status === 'Новый') statusClass = 'status-new';
+            else if(c.status === 'В работе') statusClass = 'status-work';
+            else if(c.status === 'Договор') statusClass = 'status-deal';
+            else statusClass = 'status-closed';
+            
             document.getElementById('content').innerHTML = `
                 <div class="card">
-                    <h3>#${c.number} - ${c.name}</h3>
-                    <p><strong>📞 Телефон:</strong> ${c.phone}</p>
-                    <p><strong>📐 Площадь:</strong> ${c.area} м²</p>
-                    <p><strong>📍 Адрес:</strong> ${c.address}</p>
-                    <p><strong>📌 Статус:</strong> ${c.status}</p>
-                    <p><strong>💬 Комментарий:</strong> ${c.comment}</p>
-                    <p><strong>🕐 Добавлен:</strong> ${c.time}</p>
-                    <hr>
-                    <select id="ns">
-                        <option>Новый</option>
-                        <option>В работе</option>
-                        <option>Договор</option>
-                        <option>Закрыт</option>
-                    </select>
-                    <button onclick="change(${c.number})">Изменить статус</button>
-                    <button onclick="showList()">◀️ Назад</button>
+                    <div class="number-badge">Клиент #${c.number}</div>
+                    <h3 style="margin-bottom: 16px;">${c.name}</h3>
+                    
+                    <div class="input-group">
+                        <label>📞 Телефон</label>
+                        <p style="padding: 10px; background: #f5f5f5; border-radius: 12px;">${c.phone}</p>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>📐 Площадь</label>
+                        <p style="padding: 10px; background: #f5f5f5; border-radius: 12px;">${c.area} м²</p>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>📍 Адрес</label>
+                        <p style="padding: 10px; background: #f5f5f5; border-radius: 12px;">${c.address}</p>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>📌 Статус</label>
+                        <p><span class="status-badge ${statusClass}" style="font-size: 16px; padding: 8px 16px;">${c.status}</span></p>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>💬 Комментарий</label>
+                        <p style="padding: 10px; background: #f5f5f5; border-radius: 12px;">${c.comment}</p>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>🕐 Добавлен</label>
+                        <p style="padding: 10px; background: #f5f5f5; border-radius: 12px;">${c.time}</p>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>✏️ Изменить статус</label>
+                        <select id="ns">
+                            <option ${c.status === 'Новый' ? 'selected' : ''}>Новый</option>
+                            <option ${c.status === 'В работе' ? 'selected' : ''}>В работе</option>
+                            <option ${c.status === 'Договор' ? 'selected' : ''}>Договор</option>
+                            <option ${c.status === 'Закрыт' ? 'selected' : ''}>Закрыт</option>
+                        </select>
+                    </div>
+                    
+                    <button class="save-btn" onclick="change(${c.number})">🔄 Обновить статус</button>
+                    <button class="save-btn" style="background: #6c757d; margin-top: 10px;" onclick="showList()">◀️ Назад к списку</button>
                 </div>
             `;
         }
@@ -185,15 +469,41 @@
             
             document.getElementById('content').innerHTML = `
                 <div class="card">
-                    <h3>📊 Статистика</h3>
-                    <p>👥 Всего клиентов: <b>${total}</b></p>
-                    <p>📐 Общая площадь: <b>${areaTotal} м²</b></p>
-                    <hr>
-                    <p>🟢 Новые: ${newCount}</p>
-                    <p>🟡 В работе: ${workCount}</p>
-                    <p>🔵 Договор: ${dealCount}</p>
-                    <p>✅ Закрыты: ${closedCount}</p>
-                    <button onclick="showList()">◀️ Назад</button>
+                    <h3 style="margin-bottom: 20px; text-align: center;">📊 Статистика</h3>
+                    
+                    <div class="input-group">
+                        <label>👥 Всего клиентов</label>
+                        <p style="font-size: 32px; font-weight: bold; color: #667eea;">${total}</p>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>📐 Общая площадь</label>
+                        <p style="font-size: 24px; font-weight: bold;">${areaTotal} м²</p>
+                    </div>
+                    
+                    <hr style="margin: 20px 0;">
+                    
+                    <div class="input-group">
+                        <label>🟢 Новые</label>
+                        <p style="font-size: 20px;">${newCount}</p>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>🟡 В работе</label>
+                        <p style="font-size: 20px;">${workCount}</p>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>🔵 Договор</label>
+                        <p style="font-size: 20px;">${dealCount}</p>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>✅ Закрыты</label>
+                        <p style="font-size: 20px;">${closedCount}</p>
+                    </div>
+                    
+                    <button class="save-btn" style="background: #6c757d; margin-top: 20px;" onclick="showList()">◀️ Назад</button>
                 </div>
             `;
         }
