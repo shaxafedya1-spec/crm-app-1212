@@ -9,6 +9,7 @@
         button { background: blue; color: white; padding: 15px; margin: 10px; border: none; border-radius: 10px; cursor: pointer; width: 90%; font-size: 18px; }
         .card { background: white; padding: 15px; border-radius: 15px; margin-bottom: 10px; text-align: left; }
         input, select { width: 95%; padding: 10px; margin: 5px 0; font-size: 16px; }
+        .number { background: #667eea; color: white; border-radius: 20px; padding: 5px 12px; display: inline-block; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -19,40 +20,127 @@
     <div id="content"></div>
     <script>
         let clients = [];
-        let nextId = 1;
-        function save() { localStorage.setItem('clients', JSON.stringify(clients)); localStorage.setItem('nextId', nextId); }
-        function load() { let s = localStorage.getItem('clients'); if(s) clients = JSON.parse(s); let i = localStorage.getItem('nextId'); if(i) nextId = parseInt(i); }
-        function showAdd() {
-            document.getElementById('content').innerHTML = '<div class="card"><h3>➕ Новый</h3><input id="name" placeholder="Имя"><input id="phone" placeholder="Телефон"><select id="status"><option>Новый</option><option>В работе</option><option>Договор</option><option>Закрыт</option></select><button onclick="add()">Сохранить</button></div>';
+        let nextNumber = 1;  // Нумерация клиентов
+        
+        function save() { 
+            localStorage.setItem('clients', JSON.stringify(clients)); 
+            localStorage.setItem('nextNumber', nextNumber);
         }
+        
+        function load() { 
+            let s = localStorage.getItem('clients'); 
+            if(s) clients = JSON.parse(s); 
+            let n = localStorage.getItem('nextNumber'); 
+            if(n) nextNumber = parseInt(n);
+        }
+        
+        // Отправка данных боту
+        async function sendToBot(client) {
+            try {
+                let response = await fetch(`https://api.telegram.org/bot8628159718:AAH8tPnTX0fReDzpByMG44A-iF6HG-Pm5-8/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: '@YOUR_GROUP_USERNAME',  // ВСТАВЬ СВОЙ ЮЗЕРНЕЙМ ГРУППЫ (например @my_crm_group)
+                        text: `🆕 НОВЫЙ КЛИЕНТ #${client.number}\n📛 Имя: ${client.name}\n📞 Телефон: ${client.phone}\n📌 Статус: ${client.status}`,
+                        parse_mode: 'HTML'
+                    })
+                });
+                console.log('Отправлено в группу');
+            } catch(e) {
+                console.log('Ошибка отправки:', e);
+            }
+        }
+        
+        function showAdd() {
+            document.getElementById('content').innerHTML = `
+                <div class="card">
+                    <h3>➕ Новый клиент</h3>
+                    <p class="number">Будет номер: #${nextNumber}</p>
+                    <input id="name" placeholder="Имя клиента">
+                    <input id="phone" placeholder="Телефон">
+                    <select id="status">
+                        <option>Новый</option>
+                        <option>В работе</option>
+                        <option>Договор</option>
+                        <option>Закрыт</option>
+                    </select>
+                    <button onclick="add()">Сохранить и отправить в группу</button>
+                </div>
+            `;
+        }
+        
         function add() {
             let name = document.getElementById('name').value;
             if(!name) { alert('Введите имя'); return; }
-            clients.push({ id: nextId++, name: name, phone: document.getElementById('phone').value || '—', status: document.getElementById('status').value });
-            save(); showList();
+            
+            let newClient = {
+                number: nextNumber,
+                name: name,
+                phone: document.getElementById('phone').value || '—',
+                status: document.getElementById('status').value,
+                time: new Date().toLocaleString()
+            };
+            
+            clients.push(newClient);
+            sendToBot(newClient);  // Отправляем в группу
+            nextNumber++;
+            save();
+            showList();
+            alert(`✅ Клиент #${newClient.number} добавлен и отправлен в группу!`);
         }
+        
         function showList() {
-            if(clients.length === 0) { document.getElementById('content').innerHTML = '<div class="card">📭 Нет клиентов</div>'; return; }
+            if(clients.length === 0) { 
+                document.getElementById('content').innerHTML = '<div class="card">📭 Нет клиентов</div>'; 
+                return; 
+            }
             let html = '';
             for(let c of clients) {
-                html += '<div class="card"><b>' + c.name + '</b><br>📞 ' + c.phone + '<br>📌 ' + c.status + '<br><button onclick="view(' + c.id + ')">👤 Подробнее</button></div>';
+                html += '<div class="card">' +
+                    '<b>#' + c.number + ' - ' + c.name + '</b><br>' +
+                    '📞 ' + c.phone + '<br>' +
+                    '📌 ' + c.status + '<br>' +
+                    '<button onclick="view(' + c.number + ')">👤 Подробнее</button>' +
+                    '</div>';
             }
             document.getElementById('content').innerHTML = html;
         }
-        function view(id) {
-            let c = clients.find(x => x.id === id);
-            document.getElementById('content').innerHTML = '<div class="card"><h3>' + c.name + '</h3><p>📞 ' + c.phone + '</p><p>📌 ' + c.status + '</p><select id="ns"><option>Новый</option><option>В работе</option><option>Договор</option><option>Закрыт</option></select><button onclick="change(' + c.id + ')">Изменить</button><button onclick="showList()">◀️ Назад</button></div>';
+        
+        function view(number) {
+            let c = clients.find(x => x.number === number);
+            document.getElementById('content').innerHTML = `
+                <div class="card">
+                    <h3>#${c.number} - ${c.name}</h3>
+                    <p>📞 ${c.phone}</p>
+                    <p>📌 ${c.status}</p>
+                    <p>🕐 ${c.time}</p>
+                    <select id="ns">
+                        <option>Новый</option>
+                        <option>В работе</option>
+                        <option>Договор</option>
+                        <option>Закрыт</option>
+                    </select>
+                    <button onclick="change(${c.number})">Изменить статус</button>
+                    <button onclick="showList()">◀️ Назад</button>
+                </div>
+            `;
         }
-        function change(id) {
-            let c = clients.find(x => x.id === id);
+        
+        function change(number) {
+            let c = clients.find(x => x.number === number);
             c.status = document.getElementById('ns').value;
-            save(); view(id);
+            save();
+            view(number);
         }
+        
         function showStats() {
             let total = clients.length;
             document.getElementById('content').innerHTML = '<div class="card">📊 Всего клиентов: ' + total + '</div>';
         }
-        load(); showList();
+        
+        load();
+        showList();
     </script>
 </body>
 </html>
