@@ -32,6 +32,11 @@
         .status-closed { background: #3a3a3a; color: #aaa; }
         input, select, textarea { width: 100%; padding: 14px; border: 1px solid #333; border-radius: 14px; background: #1a1a1a; color: white; }
         .save-btn { background: #ffd700; color: #111; border: none; padding: 16px; border-radius: 16px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%; }
+        .upload-btn { background: #1a5c2a; color: white; border: none; padding: 12px; border-radius: 16px; font-size: 14px; cursor: pointer; width: 100%; margin-top: 10px; }
+        .file-list { margin-top: 10px; padding: 10px; background: #1a1a1a; border-radius: 12px; }
+        .file-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #333; }
+        .file-name { color: #ffd700; font-size: 12px; }
+        .delete-file { background: none; border: none; color: #ff4444; cursor: pointer; font-size: 16px; }
         .chart-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
         .chart-label { width: 80px; color: #aaa; }
         .chart-fill { height: 24px; border-radius: 12px; background: #ffd700; }
@@ -65,6 +70,7 @@
 </div>
 <script>
 let clients = [], nextNumber = 1, currentFilter = 'all';
+
 function load() { 
     let s = localStorage.getItem('clients'); 
     if(s) clients = JSON.parse(s); 
@@ -73,16 +79,36 @@ function load() {
     if(clients.length) nextNumber = Math.max(nextNumber, Math.max(...clients.map(c=>c.number))+1);
 }
 function save() { localStorage.setItem('clients', JSON.stringify(clients)); localStorage.setItem('nextNumber', nextNumber); }
+
 const CHAT_ID = -1003831665624, BOT_TOKEN = "8628159718:AAH8tPnTX0fReDzpByMG44A-iF6HG-Pm5-8";
-async function sendToGroup(c, isChange) { 
-    let t = isChange ? 'ИЗМЕНЕНИЕ СТАТУСА' : 'НОВЫЙ КЛИЕНТ #'+c.number; 
+
+async function sendFileToGroup(fileData, client) {
+    try {
+        let byteCharacters = atob(fileData.data.split(',')[1]);
+        let byteNumbers = new Array(byteCharacters.length);
+        for(let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
+        let byteArray = new Uint8Array(byteNumbers);
+        let blob = new Blob([byteArray], {type: fileData.type});
+        let formData = new FormData();
+        formData.append('chat_id', CHAT_ID);
+        formData.append('document', blob, fileData.name);
+        formData.append('caption', `📎 Файл к клиенту #${client.number} - ${client.name}`);
+        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendDocument`, {method: 'POST', body: formData});
+    } catch(e) { console.log('Ошибка отправки файла:', e); }
+}
+
+async function sendToGroup(c, isChange, newFiles = []) {
+    let t = isChange ? 'ИЗМЕНЕНИЕ СТАТУСА' : 'НОВЫЙ КЛИЕНТ #'+c.number;
     let m = `🆕 *${t}*%0A%0A📛 *Имя:* ${c.name}%0A📞 *Телефон:* ${c.phone}%0A📐 *Площадь:* ${c.area} м²%0A📍 *Адрес:* ${c.address}%0A📌 *Статус:* ${c.status}%0A💬 *Комментарий:* ${c.comment}`;
     let url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${m}&parse_mode=Markdown`;
     try { await fetch(url); } catch(e) { console.log(e); }
+    for(let file of newFiles) await sendFileToGroup(file, c);
 }
+
 function setFilter(s) { currentFilter = s; document.querySelectorAll('.filter-btn').forEach((btn,i)=>btn.classList.toggle('active', btn.innerText === s || (s==='all' && btn.innerText==='Все'))); showList(); }
 function getFiltered() { return currentFilter === 'all' ? clients : clients.filter(c => c.status === currentFilter); }
 function clearAll() { if(confirm('Удалить всех?')) { clients = []; nextNumber = 1; save(); showList(); } }
+
 function showAdd() {
     document.getElementById('content').innerHTML = `<div class="card"><div class="number-badge">Новый клиент → #${nextNumber}</div>
         <div class="input-group"><label>📛 Имя *</label><input id="name" placeholder="Иван Петров"></div>
@@ -91,34 +117,77 @@ function showAdd() {
         <div class="input-group"><label>📍 Адрес</label><input id="address" placeholder="ул. Ленина, д. 10"></div>
         <div class="input-group"><label>📌 Статус</label><select id="status"><option>Новый</option><option>В работе</option><option>Договор</option><option>Закрыт</option></select></div>
         <div class="input-group"><label>💬 Комментарий</label><textarea id="comment" rows="3"></textarea></div>
+        <div class="input-group"><label>📎 Файлы (договор, смета, фото)</label><input type="file" id="files" multiple accept=".pdf,.doc,.docx,.jpg,.png,.xlsx"></div>
         <button class="save-btn" onclick="add()">✅ Сохранить</button></div>`;
 }
-function add() {
+
+async function add() {
     let name = document.getElementById('name').value;
     if(!name) { alert('Введите имя'); return; }
-    let c = { number: nextNumber, name: name, phone: document.getElementById('phone').value || '—', area: document.getElementById('area').value || '—', address: document.getElementById('address').value || '—', status: document.getElementById('status').value, comment: document.getElementById('comment').value || '—', time: new Date().toLocaleString() };
-    clients.push(c); save(); sendToGroup(c, false); nextNumber++; showList();
-    alert(`✅ Клиент #${c.number} добавлен!`);
+    let files = document.getElementById('files').files;
+    let fileDataArray = [];
+    for(let file of files) {
+        let reader = new FileReader();
+        let data = await new Promise(resolve => { reader.onload = e => resolve(e.target.result); reader.readAsDataURL(file); });
+        fileDataArray.push({name: file.name, type: file.type, data: data});
+    }
+    let c = { number: nextNumber, name: name, phone: document.getElementById('phone').value || '—', area: document.getElementById('area').value || '—', address: document.getElementById('address').value || '—', status: document.getElementById('status').value, comment: document.getElementById('comment').value || '—', time: new Date().toLocaleString(), files: fileDataArray };
+    clients.push(c); save(); await sendToGroup(c, false, fileDataArray); nextNumber++; showList();
+    alert(`✅ Клиент #${c.number} добавлен! Файлы отправлены в группу.`);
 }
+
 function showList() {
     let filtered = getFiltered();
     if(!filtered.length) { document.getElementById('content').innerHTML = '<div class="card empty-state">📭 Нет клиентов</div>'; return; }
     let html = '';
     for(let c of filtered) {
         let cls = c.status === 'Новый' ? 'status-new' : (c.status === 'В работе' ? 'status-work' : (c.status === 'Договор' ? 'status-deal' : 'status-closed'));
-        html += `<div class="client-card" onclick="view(${c.number})"><div class="client-number">#${c.number}</div><div class="client-name">${c.name}</div><div class="client-info">📞 ${c.phone} | 📐 ${c.area} м²</div><div><span class="status-badge ${cls}">${c.status}</span></div></div>`;
+        let fileCount = c.files ? c.files.length : 0;
+        html += `<div class="client-card" onclick="view(${c.number})"><div class="client-number">#${c.number}</div><div class="client-name">${c.name}</div><div class="client-info">📞 ${c.phone} | 📐 ${c.area} м² | 📎 ${fileCount}</div><div><span class="status-badge ${cls}">${c.status}</span></div></div>`;
     }
     document.getElementById('content').innerHTML = html;
 }
+
 function view(n) {
     let c = clients.find(x=>x.number===n);
     let cls = c.status === 'Новый' ? 'status-new' : (c.status === 'В работе' ? 'status-work' : (c.status === 'Договор' ? 'status-deal' : 'status-closed'));
+    let filesHtml = '';
+    if(c.files && c.files.length) {
+        filesHtml = '<div class="file-list"><b>📎 Файлы:</b>';
+        for(let f of c.files) filesHtml += `<div class="file-item"><span class="file-name">📄 ${f.name}</span><button class="delete-file" onclick="event.stopPropagation(); deleteFile(${n}, '${f.name}')">🗑️</button></div>`;
+        filesHtml += '</div>';
+    }
     document.getElementById('content').innerHTML = `<div class="card"><div class="number-badge">Клиент #${c.number}</div><h3>${c.name}</h3>
-        <p>📞 ${c.phone}</p><p>📐 ${c.area} м²</p><p>📍 ${c.address}</p><p><span class="status-badge ${cls}">${c.status}</span></p><p>💬 ${c.comment}</p><p>🕐 ${c.time}</p>
+        <p>📞 ${c.phone}</p><p>📐 ${c.area} м²</p><p>📍 ${c.address}</p><p><span class="status-badge ${cls}">${c.status}</span></p><p>💬 ${c.comment}</p><p>🕐 ${c.time}</p>${filesHtml}
+        <div class="input-group"><label>📎 Добавить файл</label><input type="file" id="newFile" accept=".pdf,.doc,.docx,.jpg,.png,.xlsx"></div>
+        <button class="upload-btn" onclick="addFile(${n})">📤 Добавить файл</button>
         <select id="ns"><option ${c.status==='Новый'?'selected':''}>Новый</option><option ${c.status==='В работе'?'selected':''}>В работе</option><option ${c.status==='Договор'?'selected':''}>Договор</option><option ${c.status==='Закрыт'?'selected':''}>Закрыт</option></select>
         <button class="save-btn" onclick="change(${c.number})">🔄 Изменить статус</button>
         <button class="save-btn" style="background:#2a2a2a;color:white;margin-top:10px;" onclick="showList()">◀️ Назад</button></div>`;
 }
+
+async function addFile(n) {
+    let c = clients.find(x=>x.number===n);
+    let file = document.getElementById('newFile').files[0];
+    if(!file) { alert('Выберите файл'); return; }
+    let reader = new FileReader();
+    let data = await new Promise(resolve => { reader.onload = e => resolve(e.target.result); reader.readAsDataURL(file); });
+    let fileData = {name: file.name, type: file.type, data: data};
+    if(!c.files) c.files = [];
+    c.files.push(fileData);
+    save();
+    await sendFileToGroup(fileData, c);
+    alert(`✅ Файл "${file.name}" добавлен и отправлен в группу!`);
+    view(n);
+}
+
+function deleteFile(n, fileName) {
+    let c = clients.find(x=>x.number===n);
+    c.files = c.files.filter(f => f.name !== fileName);
+    save();
+    view(n);
+}
+
 async function change(n) {
     let c = clients.find(x=>x.number===n);
     let old = c.status;
@@ -127,18 +196,20 @@ async function change(n) {
     if(old !== c.status) { await sendToGroup(c, true); alert(`✅ Статус изменён!`); }
     view(n);
 }
+
 function showStats() {
-    let total = clients.length, newC = clients.filter(c=>c.status==='Новый').length, workC = clients.filter(c=>c.status==='В работе').length, dealC = clients.filter(c=>c.status==='Договор').length, closedC = clients.filter(c=>c.status==='Закрыт').length, areaTotal = 0;
-    clients.forEach(c => { if(c.area !== '—') areaTotal += parseFloat(c.area) || 0; });
+    let total = clients.length, newC = clients.filter(c=>c.status==='Новый').length, workC = clients.filter(c=>c.status==='В работе').length, dealC = clients.filter(c=>c.status==='Договор').length, closedC = clients.filter(c=>c.status==='Закрыт').length, areaTotal = 0, fileTotal = 0;
+    clients.forEach(c => { if(c.area !== '—') areaTotal += parseFloat(c.area) || 0; if(c.files) fileTotal += c.files.length; });
     let maxC = Math.max(newC, workC, dealC, closedC, 1);
     document.getElementById('content').innerHTML = `<div class="card"><h3 style="text-align:center;color:#ffd700;">📊 СТАТИСТИКА</h3>
-        <p>👥 Всего: <b style="color:#ffd700;">${total}</b></p><p>📐 Площадь: <b>${areaTotal} м²</b></p><hr>
+        <p>👥 Всего: <b style="color:#ffd700;">${total}</b></p><p>📐 Площадь: <b>${areaTotal} м²</b></p><p>📎 Всего файлов: <b>${fileTotal}</b></p><hr>
         <div class="chart-bar"><span class="chart-label">🟢 Новые</span><div class="chart-fill" style="width:${(newC/maxC)*100}%;background:#66ccff;"></div><span>${newC}</span></div>
         <div class="chart-bar"><span class="chart-label">🟡 В работе</span><div class="chart-fill" style="width:${(workC/maxC)*100}%;background:#ffcc66;"></div><span>${workC}</span></div>
         <div class="chart-bar"><span class="chart-label">🔵 Договор</span><div class="chart-fill" style="width:${(dealC/maxC)*100}%;background:#66ff88;"></div><span>${dealC}</span></div>
         <div class="chart-bar"><span class="chart-label">✅ Закрыты</span><div class="chart-fill" style="width:${(closedC/maxC)*100}%;background:#aaa;"></div><span>${closedC}</span></div>
         <button class="save-btn" style="background:#2a2a2a;color:white;margin-top:20px;" onclick="showList()">◀️ Назад</button></div>`;
 }
+
 load(); showList();
 </script>
 </body>
