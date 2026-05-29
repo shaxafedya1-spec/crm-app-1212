@@ -34,29 +34,28 @@
             if(n) nextNumber = parseInt(n);
         }
         
-        // ID группы (работает!)
         const CHAT_ID = -1003831665624;
         const BOT_TOKEN = "8628159718:AAH8tPnTX0fReDzpByMG44A-iF6HG-Pm5-8";
         
         async function sendToGroup(client) {
-            const message = `🆕 НОВЫЙ КЛИЕНТ #${client.number}
-📛 Имя: ${client.name}
-📞 Телефон: ${client.phone}
-📌 Статус: ${client.status}
-🕐 Время: ${client.time}`;
+            let message = `🆕 *НОВЫЙ КЛИЕНТ #${client.number}*%0A%0A` +
+                          `📛 *Имя:* ${client.name}%0A` +
+                          `📞 *Телефон:* ${client.phone}%0A` +
+                          `📌 *Статус:* ${client.status}%0A` +
+                          `🕐 *Добавлен:* ${client.time}`;
             
-            const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(message)}`;
+            const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${message}&parse_mode=Markdown`;
             
             try {
                 let response = await fetch(url);
                 let result = await response.json();
                 if(result.ok) {
-                    alert("✅ Клиент добавлен и отправлен в группу!");
+                    alert(`✅ Клиент #${client.number} добавлен и отправлен в группу!`);
                 } else {
                     alert("❌ Ошибка: " + result.description);
                 }
             } catch(e) {
-                alert("❌ Ошибка отправки: " + e.message);
+                alert("❌ Ошибка: " + e.message);
             }
         }
         
@@ -73,7 +72,7 @@
                         <option>Договор</option>
                         <option>Закрыт</option>
                     </select>
-                    <button onclick="add()">Сохранить и отправить</button>
+                    <button onclick="add()">Сохранить и отправить в группу</button>
                 </div>
             `;
         }
@@ -92,7 +91,7 @@
             
             clients.push(newClient);
             save();
-            sendToGroup(newClient);  // Отправляем в группу
+            sendToGroup(newClient);  // Отправляем карточку в группу
             nextNumber++;
             showList();
         }
