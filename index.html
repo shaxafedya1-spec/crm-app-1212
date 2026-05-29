@@ -34,29 +34,23 @@
             if(n) nextNumber = parseInt(n);
         }
         
-        // Отправка в группу Telegram
+        const CHAT_ID = "@neostyle_zakazy";
+        
         async function sendToGroup(client) {
             const BOT_TOKEN = "8628159718:AAH8tPnTX0fReDzpByMG44A-iF6HG-Pm5-8";
-            const CHAT_ID = "@neostyle_zakazy";  // ← ЗДЕСЬ USERNAME ГРУППЫ
-            
-            const message = `🆕 НОВЫЙ КЛИЕНТ #${client.number}
-📛 Имя: ${client.name}
-📞 Телефон: ${client.phone}
-📌 Статус: ${client.status}
-🕐 Время: ${client.time}`;
-            
-            const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(message)}`;
+            const message = `🆕 НОВЫЙ КЛИЕНТ #${client.number}%0A📛 Имя: ${client.name}%0A📞 Телефон: ${client.phone}%0A📌 Статус: ${client.status}%0A🕐 Время: ${client.time}`;
+            const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${message}`;
             
             try {
                 let response = await fetch(url);
                 let result = await response.json();
                 if(result.ok) {
-                    console.log("Отправлено в группу");
+                    console.log("✅ Отправлено");
                 } else {
-                    console.log("Ошибка:", result);
+                    alert("Ошибка: бот не администратор группы");
                 }
             } catch(e) {
-                console.log("Ошибка отправки:", e);
+                alert("Ошибка отправки");
             }
         }
         
@@ -73,7 +67,7 @@
                         <option>Договор</option>
                         <option>Закрыт</option>
                     </select>
-                    <button onclick="add()">Сохранить и отправить</button>
+                    <button onclick="add()">Сохранить</button>
                 </div>
             `;
         }
@@ -91,11 +85,10 @@
             };
             
             clients.push(newClient);
-            sendToGroup(newClient);  // Отправляем в группу
-            nextNumber++;
             save();
+            sendToGroup(newClient);
+            nextNumber++;
             showList();
-            alert(`✅ Клиент #${newClient.number} добавлен и отправлен в группу!`);
         }
         
         function showList() {
