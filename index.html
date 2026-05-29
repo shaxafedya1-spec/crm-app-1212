@@ -26,6 +26,69 @@
         .menu-buttons { display: flex; gap: 12px; margin-bottom: 20px; }
         .menu-btn { flex: 1; background: #1a1a1a; border: none; padding: 14px; border-radius: 16px; color: white; cursor: pointer; }
         .menu-btn.add { background: #ffd700; color: #111; }
+        
+        /* ПЛАВАЮЩАЯ КНОПКА БЫСТРОГО ДОБАВЛЕНИЯ */
+        .fab {
+            position: fixed;
+            bottom: 30px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: #ffd700;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+            z-index: 1000;
+            border: none;
+        }
+        .fab:active { transform: scale(0.95); }
+        .fab span { font-size: 32px; font-weight: bold; color: #111; }
+        
+        /* Модальное окно быстрого добавления */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1001;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .modal.show { display: flex; }
+        .modal-content {
+            background: #111;
+            border-radius: 28px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90%;
+            overflow-y: auto;
+            border: 1px solid #333;
+            padding: 20px;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 15px;
+        }
+        .modal-header h3 { color: #ffd700; font-size: 20px; }
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #aaa;
+        }
         .card { background: #111; border-radius: 24px; padding: 20px; margin-bottom: 12px; border: 1px solid #333; }
         .client-card { background: #111; border-radius: 20px; padding: 16px; margin-bottom: 12px; cursor: pointer; border-left: 4px solid #ffd700; }
         .client-name { font-size: 18px; font-weight: bold; color: #fff; }
@@ -36,7 +99,6 @@
         .status-work { background: #5c3a1a; color: #ffcc66; }
         .status-deal { background: #1a5c2a; color: #66ff88; }
         .status-closed { background: #3a3a3a; color: #ccc; }
-        .status-rejected { background: #5c1a1a; color: #ff8888; }
         .input-group { margin-bottom: 16px; }
         .input-group label { display: block; font-size: 13px; font-weight: 600; color: #ffd700; margin-bottom: 6px; }
         input, select, textarea { width: 100%; padding: 14px; border: 1px solid #444; border-radius: 14px; background: #1a1a1a; color: #fff; font-size: 16px; }
@@ -45,7 +107,6 @@
         .file-list { margin-top: 10px; padding: 10px; background: #1a1a1a; border-radius: 12px; }
         .file-item { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #333; }
         .file-name { color: #ffd700; font-size: 12px; }
-        .delete-file { background: none; border: none; color: #ff6666; cursor: pointer; }
         .price-badge { background: #ffd700; color: #111; border-radius: 20px; padding: 4px 12px; font-size: 12px; display: inline-block; margin-top: 8px; }
         .empty-state { text-align: center; padding: 40px; color: #888; }
         .number-badge { background: #ffd700; color: #111; border-radius: 30px; padding: 8px 16px; display: inline-block; margin-bottom: 20px; }
@@ -53,11 +114,25 @@
         p, h3 { color: #fff; }
         .deal-section { border-top: 1px solid #333; margin-top: 15px; padding-top: 15px; }
         .profit-total { background: #1a3a1a; border-radius: 16px; padding: 12px; text-align: center; margin-top: 10px; }
-        .profit-total label { color: #ffd700; font-size: 14px; }
-        .profit-total .value { font-size: 24px; font-weight: bold; color: #66ff88; }
         .chart-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
         .chart-label { width: 90px; color: #ccc; }
         .chart-fill { height: 30px; border-radius: 15px; background: #ffd700; display: flex; align-items: center; justify-content: flex-end; padding-right: 10px; color: #111; font-weight: bold; font-size: 12px; }
+        .quick-form-row { display: flex; gap: 10px; margin-bottom: 15px; }
+        .quick-form-row .input-group { flex: 1; margin-bottom: 0; }
+        .success-toast {
+            position: fixed;
+            bottom: 100px;
+            left: 20px;
+            right: 20px;
+            background: #1a3a1a;
+            border-radius: 16px;
+            padding: 12px;
+            text-align: center;
+            color: #66ff88;
+            z-index: 1002;
+            transition: all 0.3s;
+            border: 1px solid #66ff88;
+        }
     </style>
 </head>
 <body>
@@ -87,54 +162,52 @@
     </div>
     
     <div class="menu-buttons">
-        <button class="menu-btn add" onclick="showAdd()">➕ Добавить</button>
         <button class="menu-btn" onclick="showList()">📋 Список</button>
         <button class="menu-btn" onclick="showStats()">📊 Статистика</button>
     </div>
     <div id="content"></div>
 </div>
-<script>
-// ========== НАСТРОЙКИ ==========
-let clients = [], nextNumber = 1, currentFilter = 'all';
-let currentCurrency = 'sum';
-let usdRate = 12800;
 
-function loadCurrency() {
-    let saved = localStorage.getItem('currency');
-    if(saved) currentCurrency = saved;
-    let savedRate = localStorage.getItem('usdRate');
-    if(savedRate) usdRate = parseFloat(savedRate);
-    updateCurrencyUI();
-}
-function saveCurrency() {
-    localStorage.setItem('currency', currentCurrency);
-    localStorage.setItem('usdRate', usdRate);
-}
-function setCurrency(curr) {
-    currentCurrency = curr;
-    saveCurrency();
-    updateCurrencyUI();
-    showList();
-    showStats();
-}
-function updateCurrencyUI() {
-    const sumBtn = document.getElementById('currencySum');
-    const usdBtn = document.getElementById('currencyUsd');
-    if(sumBtn) sumBtn.classList.toggle('active', currentCurrency === 'sum');
-    if(usdBtn) usdBtn.classList.toggle('active', currentCurrency === 'usd');
-    const rateSpan = document.getElementById('rateValue');
-    if(rateSpan) rateSpan.innerText = usdRate;
-}
-function editRate() {
-    let newRate = prompt('Введите курс доллара (сум за 1$):', usdRate);
-    if(newRate && !isNaN(newRate)) {
-        usdRate = parseFloat(newRate);
-        saveCurrency();
-        document.getElementById('rateValue').innerText = usdRate;
-        showList();
-        showStats();
-    }
-}
+<!-- ПЛАВАЮЩАЯ КНОПКА + МОДАЛЬНОЕ ОКНО -->
+<button class="fab" onclick="openQuickForm()"><span>+</span></button>
+
+<div id="quickModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>⚡ Быстрое добавление</h3>
+            <button class="close-modal" onclick="closeQuickForm()">✕</button>
+        </div>
+        <div class="number-badge" id="quickNumber">Новый клиент → #1</div>
+        
+        <div class="input-group"><label>📛 Имя *</label><input id="quickName" placeholder="Ислом Каримов" autofocus></div>
+        <div class="quick-form-row">
+            <div class="input-group"><label>📞 Телефон</label><input id="quickPhone" placeholder="+998 90 123 45 67"></div>
+            <div class="input-group"><label>📐 Площадь</label><input id="quickArea" placeholder="75" type="number"></div>
+        </div>
+        <div class="input-group"><label>📍 Адрес</label><input id="quickAddress" placeholder="ул. Навои, 15"></div>
+        <div class="quick-form-row">
+            <div class="input-group"><label>📌 Статус</label>
+                <select id="quickStatus">
+                    <option value="Новый">🟢 Новый</option>
+                    <option value="В работе">🟡 В работе</option>
+                </select>
+            </div>
+        </div>
+        <div class="input-group"><label>💬 Комментарий</label><textarea id="quickComment" rows="2" placeholder="Дополнительная информация..."></textarea></div>
+        <div class="input-group"><label>📎 Файлы</label><input type="file" id="quickFiles" multiple accept=".pdf,.doc,.docx,.jpg,.png"></div>
+        
+        <button class="save-btn" onclick="quickAdd()">✅ Добавить клиента</button>
+    </div>
+</div>
+
+<div id="toast" style="display:none;" class="success-toast"></div>
+
+<script>
+// ========== ОСНОВНЫЕ ПЕРЕМЕННЫЕ ==========
+let clients = [], nextNumber = 1, currentFilter = 'all';
+let currentCurrency = 'sum', usdRate = 12800;
+
+function formatNumber(num) { return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " "); }
 function formatPrice(priceSum) {
     if(!priceSum || priceSum === '—') return '—';
     let num = parseFloat(priceSum);
@@ -145,47 +218,51 @@ function formatPrice(priceSum) {
         return num.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " сум";
     }
 }
-function formatNumber(num) { return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " "); }
 
+// Валюты
+function loadCurrency() {
+    let saved = localStorage.getItem('currency');
+    if(saved) currentCurrency = saved;
+    let savedRate = localStorage.getItem('usdRate');
+    if(savedRate) usdRate = parseFloat(savedRate);
+    updateCurrencyUI();
+}
+function saveCurrency() { localStorage.setItem('currency', currentCurrency); localStorage.setItem('usdRate', usdRate); }
+function setCurrency(curr) { currentCurrency = curr; saveCurrency(); updateCurrencyUI(); showList(); showStats(); }
+function updateCurrencyUI() {
+    let sumBtn = document.getElementById('currencySum'), usdBtn = document.getElementById('currencyUsd');
+    if(sumBtn) sumBtn.classList.toggle('active', currentCurrency === 'sum');
+    if(usdBtn) usdBtn.classList.toggle('active', currentCurrency === 'usd');
+    let rateSpan = document.getElementById('rateValue');
+    if(rateSpan) rateSpan.innerText = usdRate;
+}
+function editRate() {
+    let newRate = prompt('Введите курс доллара (сум за 1$):', usdRate);
+    if(newRate && !isNaN(newRate)) { usdRate = parseFloat(newRate); saveCurrency(); document.getElementById('rateValue').innerText = usdRate; showList(); showStats(); }
+}
+
+// Загрузка/сохранение данных
 function load() { 
-    let s = localStorage.getItem('clients'); 
-    if(s) clients = JSON.parse(s); 
-    let n = localStorage.getItem('nextNumber'); 
-    if(n) nextNumber = parseInt(n); 
+    let s = localStorage.getItem('clients'); if(s) clients = JSON.parse(s); 
+    let n = localStorage.getItem('nextNumber'); if(n) nextNumber = parseInt(n); 
     loadCurrency();
+    updateQuickNumber();
 }
 function save() { localStorage.setItem('clients', JSON.stringify(clients)); localStorage.setItem('nextNumber', nextNumber); }
 
+// Отправка в Telegram
 const CHAT_ID = -1003831665624;
 const BOT_TOKEN = "8628159718:AAH8tPnTX0fReDzpByMG44A-iF6HG-Pm5-8";
 
-async function sendToGroup(c, eventType = 'new', extra = '') {
-    let title = '';
-    if(eventType === 'new') title = `🆕 НОВЫЙ КЛИЕНТ #${c.number}`;
-    else if(eventType === 'status') title = `🔄 ИЗМЕНЕНИЕ СТАТУСА`;
-    else if(eventType === 'deal') title = `✅ ПОДПИСАН ДОГОВОР #${c.number}`;
-    else if(eventType === 'closed') title = `💰 ЗАКРЫТ ДОГОВОР #${c.number} - ПОЛУЧЕНА ОПЛАТА`;
-    
-    let message = `${title}\n\n`;
-    message += `📛 Имя: ${c.name}\n`;
-    message += `📞 Телефон: ${c.phone}\n`;
-    message += `📐 Площадь: ${c.area} м²\n`;
-    message += `📍 Адрес: ${c.address}\n`;
-    message += `📌 Статус: ${c.status}\n`;
-    if(c.priceSum && c.priceSum !== '—') {
-        let sumFormatted = parseFloat(c.priceSum).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-        let usdFormatted = (parseFloat(c.priceSum) / usdRate).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-        message += `💰 Сумма: ${sumFormatted} сум / ${usdFormatted} $\n`;
-    }
-    message += `💬 Комментарий: ${c.comment}\n\n`;
-    message += `🕐 ${new Date().toLocaleString()}`;
-    if(extra) message += `\n\n${extra}`;
-    
-    const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(message)}`;
+async function sendToGroup(c, eventType = 'new') {
+    let title = eventType === 'new' ? `🆕 НОВЫЙ КЛИЕНТ #${c.number}` : `🔄 ИЗМЕНЕНИЕ СТАТУСА`;
+    let message = `${title}\n\n📛 Имя: ${c.name}\n📞 Телефон: ${c.phone}\n📐 Площадь: ${c.area} м²\n📍 Адрес: ${c.address}\n📌 Статус: ${c.status}`;
+    if(c.priceSum && c.priceSum !== '—') message += `\n💰 Сумма: ${formatPrice(c.priceSum)}`;
+    message += `\n💬 Комментарий: ${c.comment}\n\n🕐 ${new Date().toLocaleString()}`;
+    let url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(message)}`;
     try { await fetch(url); } catch(e) { console.log(e); }
 }
-
-async function sendFileToGroup(fileData, c, fileType = 'file') {
+async function sendFileToGroup(fileData, clientNumber, clientName) {
     try {
         let byteChars = atob(fileData.data.split(',')[1]);
         let bytes = new Uint8Array(byteChars.length);
@@ -194,36 +271,34 @@ async function sendFileToGroup(fileData, c, fileType = 'file') {
         let fd = new FormData();
         fd.append('chat_id', CHAT_ID);
         fd.append('document', blob, fileData.name);
-        let caption = fileType === 'deal' ? `📄 ДОГОВОР клиента #${c.number} - ${c.name}` : `📎 ${fileData.name} | Клиент #${c.number} - ${c.name}`;
-        fd.append('caption', caption);
+        fd.append('caption', `📎 ${fileData.name} | Клиент #${clientNumber} - ${clientName}`);
         await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendDocument`, {method: 'POST', body: fd});
     } catch(e) { console.log(e); }
 }
 
-function setFilter(s) { 
-    currentFilter = s; 
-    document.querySelectorAll('.filter-btn').forEach((btn,i)=>btn.classList.toggle('active', btn.innerText === s || (s==='all' && btn.innerText==='Все'))); 
-    showList(); 
+// БЫСТРОЕ ДОБАВЛЕНИЕ
+function updateQuickNumber() {
+    let badge = document.getElementById('quickNumber');
+    if(badge) badge.innerHTML = `Новый клиент → #${formatNumber(nextNumber)}`;
 }
-function getFiltered() { return currentFilter === 'all' ? clients : clients.filter(c => c.status === currentFilter); }
-
-function showAdd() {
-    document.getElementById('content').innerHTML = `<div class="card"><div class="number-badge">Новый клиент → #${formatNumber(nextNumber)}</div>
-        <div class="input-group"><label>📛 Имя *</label><input id="name" placeholder="Ислом Каримов"></div>
-        <div class="input-group"><label>📞 Телефон</label><input id="phone" placeholder="+998 90 123 45 67"></div>
-        <div class="input-group"><label>📐 Площадь (м²)</label><input id="area" placeholder="75" type="number"></div>
-        <div class="input-group"><label>📍 Адрес</label><input id="address" placeholder="ул. Навои, 15"></div>
-        <div class="input-group"><label>📌 Статус</label><select id="status"><option>Новый</option><option>В работе</option><option>Договор</option><option>Закрыт</option></select></div>
-        <div class="input-group"><label>💬 Комментарий</label><textarea id="comment" rows="3"></textarea></div>
-        <div class="input-group"><label>📎 Файлы</label><input type="file" id="files" multiple accept=".pdf,.doc,.docx,.jpg,.png"></div>
-        <button class="save-btn" onclick="add()">✅ Сохранить</button></div>`;
+function openQuickForm() {
+    document.getElementById('quickModal').classList.add('show');
+    document.getElementById('quickName').focus();
+    updateQuickNumber();
+}
+function closeQuickForm() { document.getElementById('quickModal').classList.remove('show'); }
+function showToast(msg) {
+    let toast = document.getElementById('toast');
+    toast.innerHTML = msg;
+    toast.style.display = 'block';
+    setTimeout(() => { toast.style.display = 'none'; }, 3000);
 }
 
-async function add() {
-    let name = document.getElementById('name').value;
+async function quickAdd() {
+    let name = document.getElementById('quickName').value;
     if(!name) { alert('Введите имя клиента'); return; }
     
-    let files = document.getElementById('files').files;
+    let files = document.getElementById('quickFiles').files;
     let fileDataArray = [];
     for(let f of files) {
         let reader = new FileReader();
@@ -231,15 +306,15 @@ async function add() {
         fileDataArray.push({name: f.name, type: f.type, data: data});
     }
     
-    let newClient = { 
+    let newClient = {
         number: nextNumber,
         name: name,
-        phone: document.getElementById('phone').value || '—',
-        area: document.getElementById('area').value || '—',
-        address: document.getElementById('address').value || '—',
-        status: document.getElementById('status').value,
+        phone: document.getElementById('quickPhone').value || '—',
+        area: document.getElementById('quickArea').value || '—',
+        address: document.getElementById('quickAddress').value || '—',
+        status: document.getElementById('quickStatus').value,
         priceSum: '—',
-        comment: document.getElementById('comment').value || '—',
+        comment: document.getElementById('quickComment').value || '—',
         time: new Date().toLocaleString('ru-RU'),
         files: fileDataArray,
         dealFiles: [],
@@ -249,11 +324,27 @@ async function add() {
     clients.push(newClient);
     save();
     await sendToGroup(newClient, 'new');
-    for(let f of fileDataArray) await sendFileToGroup(f, newClient, 'file');
+    for(let f of fileDataArray) await sendFileToGroup(f, newClient.number, newClient.name);
     nextNumber++;
-    showList();
-    alert(`✅ Клиент #${newClient.number} добавлен!`);
+    save();
+    
+    closeQuickForm();
+    showToast(`✅ Клиент #${formatNumber(newClient.number)} добавлен!`);
+    
+    document.getElementById('quickName').value = '';
+    document.getElementById('quickPhone').value = '';
+    document.getElementById('quickArea').value = '';
+    document.getElementById('quickAddress').value = '';
+    document.getElementById('quickComment').value = '';
+    document.getElementById('quickFiles').value = '';
+    updateQuickNumber();
+    
+    if(currentFilter === 'all' || currentFilter === newClient.status) showList();
 }
+
+// ФИЛЬТРЫ И ОТОБРАЖЕНИЕ
+function setFilter(s) { currentFilter = s; document.querySelectorAll('.filter-btn').forEach((btn,i)=>btn.classList.toggle('active', btn.innerText === s || (s==='all' && btn.innerText==='Все'))); showList(); }
+function getFiltered() { return currentFilter === 'all' ? clients : clients.filter(c => c.status === currentFilter); }
 
 function showList() {
     let filtered = getFiltered();
@@ -261,192 +352,34 @@ function showList() {
     let html = '';
     for(let c of filtered) {
         let cls = c.status === 'Новый' ? 'status-new' : (c.status === 'В работе' ? 'status-work' : (c.status === 'Договор' ? 'status-deal' : 'status-closed'));
-        html += `<div class="client-card" onclick="view(${c.number})">
+        html += `<div class="client-card" onclick="viewClient(${c.number})">
             <div class="client-number">#${formatNumber(c.number)}</div>
             <div class="client-name">${c.name}</div>
             <div class="client-info">📞 ${c.phone} | 📐 ${c.area} м²</div>
             <div><span class="status-badge ${cls}">${c.status}</span></div>
             ${c.status === 'Договор' && c.priceSum !== '—' ? `<div class="price-badge">💰 ${formatPrice(c.priceSum)}</div>` : ''}
-            ${c.status === 'Закрыт' && c.priceSum !== '—' ? `<div class="price-badge">✅ ${formatPrice(c.priceSum)}</div>` : ''}
         </div>`;
     }
     document.getElementById('content').innerHTML = html;
 }
 
-function view(n) {
+function viewClient(n) {
     let c = clients.find(x=>x.number===n);
     if(!c) { showList(); return; }
-    
     let cls = c.status === 'Новый' ? 'status-new' : (c.status === 'В работе' ? 'status-work' : (c.status === 'Договор' ? 'status-deal' : 'status-closed'));
-    let isDealLocked = c.status === 'Договор' && c.dealSigned;
-    
-    let filesHtml = '';
-    if(c.files && c.files.length) {
-        filesHtml = '<div class="file-list"><b>📎 Файлы:</b>';
-        for(let f of c.files) filesHtml += `<div class="file-item"><span class="file-name">📄 ${f.name}</span><button class="delete-file" onclick="event.stopPropagation(); deleteFile(${n}, '${f.name}', 'files')">🗑️</button></div>`;
-        filesHtml += '</div>';
-    }
-    
-    let dealFilesHtml = '';
-    if(c.dealFiles && c.dealFiles.length) {
-        dealFilesHtml = '<div class="file-list deal-section"><b>📄 Договоры:</b>';
-        for(let f of c.dealFiles) dealFilesHtml += `<div class="file-item"><span class="file-name">📑 ${f.name}</span><button class="delete-file" onclick="event.stopPropagation(); deleteFile(${n}, '${f.name}', 'dealFiles')">🗑️</button></div>`;
-        dealFilesHtml += '</div>';
-    }
-    
-    let dealSection = '';
-    if(c.status === 'Договор' && !c.dealSigned) {
-        dealSection = `<div class="deal-section">
-            <div class="currency-input-group" style="display:flex; gap:10px;">
-                <input id="dealPrice" type="number" placeholder="Сумма" style="flex:2;">
-                <select id="dealCurrency" style="flex:1;">
-                    <option value="sum">🇺🇿 Сум</option>
-                    <option value="usd">🇺🇸 USD</option>
-                </select>
-            </div>
-            <div class="input-group"><label>📄 Файл договора</label><input type="file" id="dealFile" accept=".pdf,.doc,.docx"></div>
-            <button class="save-btn" onclick="signDeal(${n})">✅ Подписать договор</button>
-        </div>`;
-    }
-    
-    // Статус Договор можно изменить только на Закрыт
-    let statusOptions = '';
-    if(c.status === 'Договор' && c.dealSigned) {
-        statusOptions = `<select id="ns">
-            <option selected>Договор</option>
-            <option>Закрыт</option>
-        </select>
-        <button class="save-btn" onclick="changeStatus(${n})">✅ Закрыть договор (получить оплату)</button>`;
-    } else if(c.status === 'Закрыт') {
-        statusOptions = `<div class="deal-section" style="color:#66ff88;">✅ Договор закрыт — оплата получена</div>`;
-    } else {
-        statusOptions = `<select id="ns">
-            <option ${c.status==='Новый' ? 'selected' : ''}>Новый</option>
-            <option ${c.status==='В работе' ? 'selected' : ''}>В работе</option>
-            <option ${c.status==='Договор' ? 'selected' : ''}>Договор</option>
-        </select>
-        <button class="save-btn" onclick="changeStatus(${n})">🔄 Изменить статус</button>`;
-    }
-    
     document.getElementById('content').innerHTML = `<div class="card">
         <div class="number-badge">Клиент #${formatNumber(c.number)}</div>
-        <h3>${c.name}</h3>
-        <p>📞 ${c.phone}</p>
-        <p>📐 ${c.area} м²</p>
-        <p>📍 ${c.address}</p>
+        <h3>${c.name}</h3><p>📞 ${c.phone}</p><p>📐 ${c.area} м²</p><p>📍 ${c.address}</p>
         <p><span class="status-badge ${cls}">${c.status}</span></p>
-        ${c.priceSum !== '—' ? `<p>💰 ${formatPrice(c.priceSum)}</p>` : ''}
-        <p>💬 ${c.comment}</p>
-        <p>🕐 ${c.time}</p>
-        ${filesHtml}${dealFilesHtml}
-        ${dealSection}
-        <div class="input-group"><label>📎 Добавить файл</label><input type="file" id="newFile" accept=".pdf,.doc,.docx,.jpg,.png"></div>
-        <button class="upload-btn" onclick="addFile(${n})">📤 Добавить файл</button>
-        ${statusOptions}
+        <p>💬 ${c.comment}</p><p>🕐 ${c.time}</p>
         <button class="upload-btn" style="background:#2a2a2a;margin-top:10px;" onclick="showList()">◀️ Назад</button>
     </div>`;
 }
 
-async function signDeal(n) {
-    let c = clients.find(x=>x.number===n);
-    let price = document.getElementById('dealPrice').value;
-    let currency = document.getElementById('dealCurrency').value;
-    let file = document.getElementById('dealFile').files[0];
-    
-    if(!price && !file) { 
-        alert('Введите сумму или прикрепите файл договора'); 
-        return; 
-    }
-    
-    if(price) {
-        let priceNum = parseFloat(price);
-        if(currency === 'usd') {
-            c.priceSum = (priceNum * usdRate).toString();
-        } else {
-            c.priceSum = priceNum.toString();
-        }
-    }
-    
-    if(file) {
-        let reader = new FileReader();
-        let data = await new Promise(r => { reader.onload = e => r(e.target.result); reader.readAsDataURL(file); });
-        let fileData = {name: file.name, type: file.type, data: data};
-        if(!c.dealFiles) c.dealFiles = [];
-        c.dealFiles.push(fileData);
-        await sendFileToGroup(fileData, c, 'deal');
-    }
-    
-    c.dealSigned = true;
-    save();
-    await sendToGroup(c, 'deal');
-    alert(`✅ Договор подписан! Сумма: ${formatPrice(c.priceSum)}`);
-    view(n);
-}
-
-async function changeStatus(n) {
-    let c = clients.find(x=>x.number===n);
-    let oldStatus = c.status;
-    let newStatus = document.getElementById('ns').value;
-    
-    if(oldStatus === newStatus) { view(n); return; }
-    
-    // Если закрываем договор — отправляем специальное сообщение о прибыли
-    if(oldStatus === 'Договор' && newStatus === 'Закрыт' && c.dealSigned) {
-        c.status = newStatus;
-        save();
-        let profitMsg = `🏆 ПОЛУЧЕНА ОПЛАТА! 🏆\nКлиент #${c.number} - ${c.name}\n💰 Сумма: ${formatPrice(c.priceSum)}`;
-        await sendToGroup(c, 'closed', profitMsg);
-        alert(`✅ Договор закрыт! Сумма ${formatPrice(c.priceSum)} зачислена в прибыль!`);
-        showStats();
-        view(n);
-        return;
-    }
-    
-    c.status = newStatus;
-    save();
-    await sendToGroup(c, 'status');
-    alert(`✅ Статус изменён с "${oldStatus}" на "${newStatus}"!`);
-    
-    if(newStatus === 'Договор') {
-        alert('📄 Теперь можно подписать договор: укажите сумму и прикрепите файл');
-    }
-    view(n);
-}
-
-async function addFile(n) {
-    let c = clients.find(x=>x.number===n);
-    let file = document.getElementById('newFile').files[0];
-    if(!file) { alert('Выберите файл'); return; }
-    
-    let reader = new FileReader();
-    let data = await new Promise(r => { reader.onload = e => r(e.target.result); reader.readAsDataURL(file); });
-    let fileData = {name: file.name, type: file.type, data: data};
-    
-    if(!c.files) c.files = [];
-    c.files.push(fileData);
-    save();
-    await sendFileToGroup(fileData, c, 'file');
-    alert(`✅ Файл добавлен и отправлен в группу!`);
-    view(n);
-}
-
-function deleteFile(n, fileName, type) {
-    let c = clients.find(x=>x.number===n);
-    if(c.status === 'Договор' && c.dealSigned) { 
-        alert('❌ Нельзя удалять файлы у подписанного договора'); 
-        return; 
-    }
-    c[type] = c[type].filter(f => f.name !== fileName);
-    save();
-    view(n);
-}
-
 function showStats() {
-    let total = clients.length, areaTotal = 0;
+    let total = clients.length, areaTotal = 0, totalProfit = 0;
     let newC = 0, workC = 0, dealC = 0, closedC = 0;
-    let totalProfit = 0; // ТОЛЬКО ЗАКРЫТЫЕ договоры
-    
-    clients.forEach(c => { 
+    clients.forEach(c => {
         areaTotal += parseFloat(c.area) || 0;
         if(c.status === 'Новый') newC++;
         else if(c.status === 'В работе') workC++;
@@ -456,33 +389,20 @@ function showStats() {
             if(c.priceSum !== '—') totalProfit += parseFloat(c.priceSum) || 0;
         }
     });
-    
     let maxCount = Math.max(newC, workC, dealC, closedC, 1);
-    
     document.getElementById('content').innerHTML = `<div class="card">
         <h3 style="text-align:center;color:#ffd700;">📊 СТАТИСТИКА</h3>
-        
-        <div class="profit-total" style="background:#1a3a1a; border-radius:16px; padding:15px; text-align:center; margin-bottom:20px;">
-            <label>💰 ОБЩАЯ ПРИБЫЛЬ</label>
-            <div class="value" style="font-size:28px; font-weight:bold; color:#66ff88;">${formatPrice(totalProfit)}</div>
-            <label style="font-size:12px;">со всех закрытых договоров</label>
-        </div>
-        
-        <p>👥 Всего клиентов: <b style="color:#ffd700;">${total}</b></p>
-        <p>📐 Общая площадь: <b>${areaTotal} м²</b></p>
-        <hr>
-        
-        <div class="chart-bar"><span class="chart-label">🟢 Новые</span><div class="chart-fill" style="width: ${(newC/maxCount)*100}%; background: #66ccff;"> ${newC}</div></div>
-        <div class="chart-bar"><span class="chart-label">🟡 В работе</span><div class="chart-fill" style="width: ${(workC/maxCount)*100}%; background: #ffcc66;"> ${workC}</div></div>
-        <div class="chart-bar"><span class="chart-label">🔵 Договор</span><div class="chart-fill" style="width: ${(dealC/maxCount)*100}%; background: #66ff88;"> ${dealC}</div></div>
-        <div class="chart-bar"><span class="chart-label">✅ Закрыты</span><div class="chart-fill" style="width: ${(closedC/maxCount)*100}%; background: #aaa;"> ${closedC}</div></div>
-        
+        <div class="profit-total"><label>💰 ОБЩАЯ ПРИБЫЛЬ</label><div class="value" style="font-size:28px;font-weight:bold;color:#66ff88;">${formatPrice(totalProfit)}</div></div>
+        <p>👥 Всего: <b style="color:#ffd700;">${total}</b> | 📐 Площадь: <b>${areaTotal} м²</b></p>
+        <div class="chart-bar"><span class="chart-label">🟢 Новые</span><div class="chart-fill" style="width:${(newC/maxCount)*100}%;background:#66ccff;"> ${newC}</div></div>
+        <div class="chart-bar"><span class="chart-label">🟡 В работе</span><div class="chart-fill" style="width:${(workC/maxCount)*100}%;background:#ffcc66;"> ${workC}</div></div>
+        <div class="chart-bar"><span class="chart-label">🔵 Договор</span><div class="chart-fill" style="width:${(dealC/maxCount)*100}%;background:#66ff88;"> ${dealC}</div></div>
+        <div class="chart-bar"><span class="chart-label">✅ Закрыты</span><div class="chart-fill" style="width:${(closedC/maxCount)*100}%;background:#aaa;"> ${closedC}</div></div>
         <button class="save-btn" style="background:#2a2a2a;color:white;margin-top:20px;" onclick="showList()">◀️ Назад</button>
     </div>`;
 }
 
-load(); 
-showList();
+load(); showList();
 </script>
 </body>
 </html>
