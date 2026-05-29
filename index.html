@@ -10,12 +10,13 @@
         .app-container { max-width: 500px; margin: 0 auto; }
         .header { background: rgba(255,255,255,0.95); border-radius: 28px; padding: 20px; margin-bottom: 20px; text-align: center; box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
         .header h1 { font-size: 28px; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .menu-buttons { display: flex; gap: 12px; margin-bottom: 20px; }
-        .menu-btn { flex: 1; border: none; padding: 14px; border-radius: 16px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .menu-buttons { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+        .menu-btn { flex: 1; border: none; padding: 14px; border-radius: 16px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; gap: 8px; min-width: 100px; }
         .menu-btn:active { transform: scale(0.96); }
         .menu-btn.add { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
         .menu-btn.list { background: white; color: #333; }
         .menu-btn.stats { background: white; color: #333; }
+        .menu-btn.clear { background: #ef4444; color: white; }
         .card { background: white; border-radius: 24px; padding: 20px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); animation: fadeIn 0.3s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .input-group { margin-bottom: 16px; }
@@ -46,20 +47,28 @@
             <button class="menu-btn add" onclick="showAdd()">➕ Добавить</button>
             <button class="menu-btn list" onclick="showList()">📋 Список</button>
             <button class="menu-btn stats" onclick="showStats()">📊 Статистика</button>
+            <button class="menu-btn clear" onclick="clearAll()">🗑️ Очистить</button>
         </div>
         <div id="content"></div>
     </div>
     <script>
-        // Загружаем данные, но удаляем старые (без полей area, address, comment)
-        let clients = JSON.parse(localStorage.getItem('clients') || '[]');
-        // Фильтруем: оставляем только клиентов с новыми полями
-        clients = clients.filter(c => c.area !== undefined && c.address !== undefined && c.comment !== undefined);
-        let nextNumber = parseInt(localStorage.getItem('nextNumber') || '1');
-        if(clients.length > 0) {
-            let maxNumber = Math.max(...clients.map(c => c.number));
-            if(nextNumber <= maxNumber) nextNumber = maxNumber + 1;
+        let clients = [];
+        let nextNumber = 1;
+        
+        function load() {
+            let saved = localStorage.getItem('clients');
+            if(saved) {
+                clients = JSON.parse(saved);
+                // Фильтруем только валидных клиентов
+                clients = clients.filter(c => c.name && typeof c.number === 'number');
+            }
+            let savedNum = localStorage.getItem('nextNumber');
+            if(savedNum) nextNumber = parseInt(savedNum);
+            if(clients.length > 0) {
+                let maxNum = Math.max(...clients.map(c => c.number));
+                if(nextNumber <= maxNum) nextNumber = maxNum + 1;
+            }
         }
-        save();
         
         function save() { 
             localStorage.setItem('clients', JSON.stringify(clients)); 
@@ -83,9 +92,24 @@
             try {
                 let response = await fetch(url);
                 let result = await response.json();
-                if(result.ok) alert(`✅ Клиент #${client.number} добавлен и отправлен в группу!`);
-                else alert("❌ Ошибка: " + result.description);
-            } catch(e) { alert("❌ Ошибка: " + e.message); }
+                if(result.ok) {
+                    alert(`✅ Клиент #${client.number} добавлен и отправлен в группу!`);
+                } else {
+                    alert("❌ Ошибка Telegram: " + result.description);
+                }
+            } catch(e) { 
+                alert("❌ Ошибка: " + e.message); 
+            }
+        }
+        
+        function clearAll() {
+            if(confirm("🗑️ Удалить ВСЕХ клиентов? Это действие не обратимо!")) {
+                clients = [];
+                nextNumber = 1;
+                save();
+                showList();
+                alert("✅ Все данные очищены!");
+            }
         }
         
         function showAdd() {
@@ -143,6 +167,7 @@
         
         function view(number) {
             let c = clients.find(x => x.number === number);
+            if(!c) { showList(); return; }
             let statusClass = c.status === 'Новый' ? 'status-new' : (c.status === 'В работе' ? 'status-work' : (c.status === 'Договор' ? 'status-deal' : 'status-closed'));
             document.getElementById('content').innerHTML = `
                 <div class="card">
@@ -170,9 +195,11 @@
         
         function change(number) {
             let c = clients.find(x => x.number === number);
-            c.status = document.getElementById('ns').value;
-            save();
-            view(number);
+            if(c) {
+                c.status = document.getElementById('ns').value;
+                save();
+                view(number);
+            }
         }
         
         function showStats() {
@@ -197,6 +224,7 @@
             `;
         }
         
+        load();
         showList();
     </script>
 </body>
